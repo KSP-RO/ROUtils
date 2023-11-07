@@ -121,6 +121,7 @@
     <Compile Include="DataTypes\PersistentList.cs" />
     <Compile Include="DataTypes\PersistentSortedList.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ResourceUnitInfo.cs" />
     <Compile Include="SingletonHost.cs" />
     <Compile Include="Utils\DTUtils.cs" />
     <Compile Include="Utils\HyperEdit_Utilities.cs" />
