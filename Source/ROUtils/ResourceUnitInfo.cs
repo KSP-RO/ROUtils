@@ -132,7 +132,7 @@ namespace ROUtils
 
         public static string PrintMass(double mass, int sigFigs = 3, bool longPrefix = false)
         {
-            return mass < 1d ? KSPUtil.PrintSI(mass * 1000d * 1000d, longPrefix ? "grams" : "g", sigFigs, longPrefix) : KSPUtil.PrintSI(mass, longPrefix ? "tons" : "t", sigFigs, longPrefix);
+            return mass < 1d ? PrintSI(mass * 1000d * 1000d, longPrefix ? "grams" : "g", sigFigs, longPrefix) : PrintSI(mass, longPrefix ? "tons" : "t", sigFigs, longPrefix);
         }
 
         public static string PrintRatePerSecBare(double rate, int resID, int sigFigs = 3, string precision = "G2", bool longPrefix = false)
@@ -153,7 +153,7 @@ namespace ROUtils
                 }
             }
             if (useSI)
-                return KSPUtil.PrintSI(rate, unitRate, sigFigs, longPrefix);
+                return PrintSI(rate, unitRate, sigFigs, longPrefix);
             else
                 return rate.ToString(precision) + unitRate;
         }
@@ -216,7 +216,7 @@ namespace ROUtils
             {
                 string massRate = density * rate > 0d ? " - " + Localizer.Format(PerSecLocString, PrintMass(rate * density)) : string.Empty;
                 if (useSI)
-                    output += "- <b>" + title + ": </b>" + KSPUtil.PrintSI(rate, unitRate, sigFigs, longPrefix) + massRate + "\n";
+                    output += "- <b>" + title + ": </b>" + PrintSI(rate, unitRate, sigFigs, longPrefix) + massRate + "\n";
                 else
                     output += Localizer.Format("#autoLOC_6002412", title, rate.ToString("0.000"), " "  + unitRate + massRate);
             }
@@ -246,7 +246,7 @@ namespace ROUtils
 
         public static string PrintSIRate(double rate, string unit, int sigFigs = 3, bool longPrefix = false)
         {
-            return KSPUtil.PrintSI(Math.Abs(rate), unit, sigFigs, longPrefix);
+            return PrintSI(Math.Abs(rate), unit, sigFigs, longPrefix);
         }
 
         public static string PrintSIRate(double rate, int resID, int sigFigs = 3, bool longPrefix = false)
@@ -261,7 +261,7 @@ namespace ROUtils
 
         public static string PrintSIAmount(double amount, string unit, int sigFigs = 3, bool longPrefix = false)
         {
-            return KSPUtil.PrintSI(amount, unit, sigFigs, longPrefix);
+            return PrintSI(amount, unit, sigFigs, longPrefix);
         }
 
         public static string PrintSIAmount(double rate, int resID, int sigFigs = 3, bool longPrefix = false)
