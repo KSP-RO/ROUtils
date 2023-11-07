@@ -7,6 +7,24 @@ namespace ROUtils
 {
     public static class ModUtils
     {
+        private static bool _RP1Installed = false;
+        private static bool _NeedFindRP1 = false;
+
+        public static bool IsRP1Installed
+        {
+            get
+            {
+                if (_NeedFindRP1)
+                {
+                    _NeedFindRP1 = false;
+                    _RP1Installed = AssemblyLoader.loadedAssemblies.Any(a => a.name.Equals("RP-0", StringComparison.OrdinalIgnoreCase));
+                }
+
+                return _RP1Installed;
+            }
+        }
+
+                
         private static bool? _isTestFlightInstalled = null;
         private static bool? _isTestLiteInstalled = null;
 
