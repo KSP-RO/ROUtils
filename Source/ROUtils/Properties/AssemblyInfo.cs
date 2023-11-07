@@ -35,11 +35,11 @@ using System.Runtime.InteropServices;
 // [assembly: AssemblyVersion("1.0.*")]
 [assembly: AssemblyVersion("1.0.0.0")]    // Don't change for every release
 #if CIBUILD
-[assembly: AssemblyFileVersion("@MAJOR@.@MINOR@.@PATCH.@BUILD@")]
-[assembly: KSPAssembly("ROUtils", @MAJOR@, @MINOR@)]
+[assembly: AssemblyFileVersion("@MAJOR@.@MINOR@.@PATCH@.@BUILD@")]
+[assembly: KSPAssembly("ROUtils", @MAJOR@, @MINOR@, @PATCH@)]
 #else
 [assembly: AssemblyFileVersion("1.0.0.0")]
-[assembly: KSPAssembly("ROUtils", 1, 0)]
+[assembly: KSPAssembly("ROUtils", 1, 0, 0)]
 #endif
 
 [assembly: KSPAssemblyDependency("KSPCommunityFixes", 1, 22, 1)]
