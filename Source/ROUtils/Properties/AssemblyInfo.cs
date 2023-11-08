@@ -33,13 +33,13 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.0.0")]    // Don't change for every release
+[assembly: AssemblyVersion("1.0.1.0")]    // Don't change for every release
 #if CIBUILD
 [assembly: AssemblyFileVersion("@MAJOR@.@MINOR@.@PATCH@.@BUILD@")]
 [assembly: KSPAssembly("ROUtils", @MAJOR@, @MINOR@, @PATCH@)]
 #else
-[assembly: AssemblyFileVersion("1.0.0.0")]
-[assembly: KSPAssembly("ROUtils", 1, 0, 0)]
+[assembly: AssemblyFileVersion("1.0.1.0")]
+[assembly: KSPAssembly("ROUtils", 1, 0, 1)]
 #endif
 
 [assembly: KSPAssemblyDependency("KSPCommunityFixes", 1, 22, 1)]
