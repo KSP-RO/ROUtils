@@ -19,12 +19,12 @@ namespace ROUtils
             return Epoch.AddSeconds(ut);
         }
 
-        public static string GetColonFormattedTime(double t, double extraTime = 0d, bool flip = false, bool showSeconds = true)
+        public static string GetColonFormattedTime(double t, bool allowDate, double extraTime = 0d, bool flip = false, bool showSeconds = true)
         {
             if (double.IsNaN(t) || double.IsInfinity(t))
                 return "(infinity)";
 
-            bool shouldUseDate = t > MaxSecondsForDayDisplay;
+            bool shouldUseDate = allowDate && t > MaxSecondsForDayDisplay;
             double timeCheck = (shouldUseDate ^ flip) ? extraTime + t : t;
             if (timeCheck > MaxTimeToDisplay)
                 return "(infinity)";
@@ -35,12 +35,12 @@ namespace ROUtils
             return PrintTimeStampCompact(t, days: t > 86400d, years: false, seconds: showSeconds);
         }
 
-        public static string GetFormattedTime(double t, double extraTime = 0d, bool allowDate = true)
+        public static string GetFormattedTime(double t, bool allowDate, double extraTime = 0d)
         {
             if (double.IsNaN(t) || double.IsInfinity(t))
                 return "(infinity)";
 
-            bool shouldUseDate = t > MaxSecondsForDayDisplay && allowDate;
+            bool shouldUseDate = allowDate && t > MaxSecondsForDayDisplay;
             double timeCheck = shouldUseDate ? extraTime + t : t;
             if (timeCheck > MaxTimeToDisplay)
                 return "(infinity)";
@@ -51,11 +51,11 @@ namespace ROUtils
             return KSPUtil.dateTimeFormatter.PrintTime(t, 4, explicitPositive: false);
         }
 
-        public static GUIContent GetColonFormattedTimeWithTooltip(double t, string identifier, double extraTime = 0, bool showEst = false)
+        public static GUIContent GetColonFormattedTimeWithTooltip(double t, string identifier, bool allowDate, double extraTime = 0, bool showEst = false)
         {
-            return new GUIContent(showEst ? $"Est: {GetColonFormattedTime(t, extraTime, flip: false, showSeconds: false)}" :
-                                            GetColonFormattedTime(t, extraTime, flip: false, showSeconds: true),
-                                  $"{identifier}¶{GetColonFormattedTime(t, extraTime, flip: true, showSeconds: true)}");
+            return new GUIContent(showEst ? $"Est: {GetColonFormattedTime(t, allowDate, extraTime, flip: false, showSeconds: false)}" :
+                                            GetColonFormattedTime(t, allowDate, extraTime, flip: false, showSeconds: true),
+                                  $"{identifier}¶{GetColonFormattedTime(t, allowDate, extraTime, flip: true, showSeconds: true)}");
         }
 
         /// <summary>

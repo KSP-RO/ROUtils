@@ -4,9 +4,9 @@ using System.Runtime.Serialization.Formatters.Binary;
 namespace ROUtils
 {
     //Taken from Procedural Parts
-    internal static class ObjectSerializer
+    public static class ObjectSerializer
     {
-        internal static byte[] Serialize<T>(T obj)
+        public static byte[] Serialize<T>(T obj)
         {
             MemoryStream stream = new MemoryStream();
             using (stream)
@@ -17,7 +17,7 @@ namespace ROUtils
             return stream.ToArray();
         }
 
-        internal static T Deserialize<T>(byte[] data)
+        public static T Deserialize<T>(byte[] data)
         {
             using (MemoryStream stream = new MemoryStream(data))
             {
@@ -26,27 +26,27 @@ namespace ROUtils
             }
         }
 
-        internal static string Base64Encode(byte[] bytes)
+        public static string Base64Encode(byte[] bytes)
         {
             return System.Convert.ToBase64String(bytes);
         }
 
-        internal static string Base64EncodeString(string text)
+        public static string Base64EncodeString(string text)
         {
             return Base64Encode(System.Text.Encoding.UTF8.GetBytes(text));
         }
 
-        internal static byte[] Base64Decode(string base64EncodedData)
+        public static byte[] Base64Decode(string base64EncodedData)
         {
             return System.Convert.FromBase64String(base64EncodedData);
         }
 
-        internal static string Base64DecodeString(string base64Text)
+        public static string Base64DecodeString(string base64Text)
         {
             return System.Text.Encoding.UTF8.GetString(Base64Decode(base64Text));
         }
 
-        internal static byte[] Zip(string text)
+        public static byte[] Zip(string text)
         {
             if (text == null)
                 return null;
@@ -64,7 +64,7 @@ namespace ROUtils
             }
         }
 
-        internal static string UnZip(byte[] bytes)
+        public static string UnZip(byte[] bytes)
         {
             if (bytes == null)
                 return null;
