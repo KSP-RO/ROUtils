@@ -87,5 +87,16 @@ namespace ROUtils
             _fiTLSettingsDisabled.SetValue(HighLogic.CurrentGame.Parameters.CustomParams(_tlSettingsType), !isEnabled);
             GameEvents.OnGameSettingsApplied.Fire();
         }
+
+        public static bool IsPrincipiaInstalled => _needCheckPrincipia ? FindPrincipia() : _isPrincipiaInstalled;
+
+        private static bool _isPrincipiaInstalled = false;
+        private static bool _needCheckPrincipia = true;
+        private static bool FindPrincipia()
+        {
+            _needCheckPrincipia = false;
+            _isPrincipiaInstalled = AssemblyLoader.loadedAssemblies.Any(a => a.name.Equals("ksp_plugin_adapter", StringComparison.OrdinalIgnoreCase));
+            return _isPrincipiaInstalled;
+        }
     }
 }

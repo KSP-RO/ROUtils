@@ -47,6 +47,29 @@ namespace ROUtils
             return list;
         }
 
+        public static double PrincipiaCorrectInclination(Orbit o)
+        {
+            if (ModUtils.IsPrincipiaInstalled && o.referenceBody != (FlightGlobals.currentMainBody ?? Planetarium.fetch.Home))
+            {
+                Vector3d polarAxis = o.referenceBody.BodyFrame.Z;
+
+                double hSqrMag = o.h.sqrMagnitude;
+                if (hSqrMag == 0d)
+                {
+                    return Math.Acos(Vector3d.Dot(polarAxis, o.pos) / o.pos.magnitude) * (180.0 / Math.PI);
+                }
+                else
+                {
+                    Vector3d orbitZ = o.h / Math.Sqrt(hSqrMag);
+                    return Math.Atan2((orbitZ - polarAxis).magnitude, (orbitZ + polarAxis).magnitude) * (2d * (180.0 / Math.PI));
+                }
+            }
+            else
+            {
+                return o.inclination;
+            }
+        }
+
         /// <summary>
         /// Tests to see if two ConfigNodes have the same information. Currently requires same ordering of values and subnodes
         /// </summary>

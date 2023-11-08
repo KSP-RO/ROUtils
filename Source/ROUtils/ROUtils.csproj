@@ -126,7 +126,6 @@
     <Compile Include="Utils\DTUtils.cs" />
     <Compile Include="Utils\HyperEdit_Utilities.cs" />
     <Compile Include="Utils\KSPUtils.cs" />
-    <Compile Include="Utils\PrincipiaUtils.cs" />
     <Compile Include="Utils\ModUtils.cs" />
     <Compile Include="Utils\MathUtils.cs" />
     <Compile Include="Utils\MiscUtils.cs" />
