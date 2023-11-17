@@ -6,9 +6,9 @@ namespace ROUtils.DataTypes
 {
     public class PersistentHashSet<T> : HashSet<T>, IConfigNode where T : IConfigNode
     {
-        private static readonly Type _type = typeof(T);
-        private static readonly string _typeName = typeof(T).Name;
-        private static readonly Dictionary<string, Type> _typeCache = new Dictionary<string, Type>();
+        private static readonly Type _Type = typeof(T);
+        private static readonly string _TypeName = typeof(T).Name;
+        private static readonly Dictionary<string, Type> _TypeCache = new Dictionary<string, Type>();
 
         public void Load(ConfigNode node)
         {
@@ -19,18 +19,18 @@ namespace ROUtils.DataTypes
             foreach (ConfigNode n in node.nodes)
             {
                 T item;
-                if (version == 1 || n.name == "ITEM" || n.name == _typeName)
+                if (version == 1 || n.name == "ITEM" || n.name == _TypeName)
                 {
                     item = Activator.CreateInstance<T>();
                 }
                 else
                 {
-                    if (!_typeCache.TryGetValue(n.name, out var type))
+                    if (!_TypeCache.TryGetValue(n.name, out var type))
                         type = HarmonyLib.AccessTools.TypeByName(n.name);
-                    if (type == null || !_type.IsAssignableFrom(type))
-                        type = _type;
+                    if (type == null || !_Type.IsAssignableFrom(type))
+                        type = _Type;
                     else
-                        _typeCache[n.name] = type;
+                        _TypeCache[n.name] = type;
 
                     item = (T)Activator.CreateInstance(type);
                 }
@@ -45,7 +45,7 @@ namespace ROUtils.DataTypes
             foreach (var item in this)
             {
                 var type = item.GetType();
-                ConfigNode n = new ConfigNode(type == _type ? _typeName : type.FullName);
+                ConfigNode n = new ConfigNode(type == _Type ? _TypeName : type.FullName);
                 item.Save(n);
                 node.AddNode(n);
             }

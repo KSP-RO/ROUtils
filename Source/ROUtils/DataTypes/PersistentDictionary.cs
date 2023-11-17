@@ -7,45 +7,58 @@ namespace ROUtils.DataTypes
 {
     public abstract class PersistentDictionary<TKey, TValue> : Dictionary<TKey, TValue>, IConfigNode where TValue : IConfigNode
     {
-        private static readonly Type _type = typeof(TValue);
-        private static readonly string _typeName = typeof(TValue).Name;
-        private static readonly Dictionary<string, Type> _typeCache = new Dictionary<string, Type>();
+        protected static readonly Type _ValueType = typeof(TValue);
+        protected static readonly string _ValueTypeName = typeof(TValue).Name;
+        protected static readonly Dictionary<string, Type> _TypeCache = new Dictionary<string, Type>();
 
-        protected abstract TKey ParseKey(string key);
+        protected int version; // will be set on load but not used on save
 
-        protected abstract string WriteKey(TKey key);
+        protected abstract TKey GetKey(int i, ConfigNode keyNode);
+        protected abstract void AddKey(TKey key, ConfigNode keyNode);
+
+        protected TValue GetValue(int i, ConfigNode valueNode)
+        {
+            var n = valueNode.nodes[i];
+            TValue value;
+            if (version == 1 || n.name == "VALUE" || n.name == _ValueTypeName)
+            {
+                value = Activator.CreateInstance<TValue>();
+            }
+            else
+            {
+                if (!_TypeCache.TryGetValue(n.name, out var type))
+                    type = HarmonyLib.AccessTools.TypeByName(n.name);
+                if (type == null || !_ValueType.IsAssignableFrom(type))
+                    type = _ValueType;
+                else
+                    _TypeCache[n.name] = type;
+
+                value = (TValue)Activator.CreateInstance(type);
+            }
+            value.Load(n);
+            return value;
+        }
+
+        protected void AddValue(TValue value, ConfigNode valueNode)
+        {
+            var type = value.GetType();
+            ConfigNode n = new ConfigNode(type == _ValueType ? _ValueTypeName : type.FullName);
+            value.Save(n);
+            valueNode.AddNode(n);
+        }
 
         public void Load(ConfigNode node)
         {
-            
             Clear();
             ConfigNode keyNode = node.nodes[0];
             ConfigNode valueNode = node.nodes[1];
-            int version = 1;
+            version = 1;
             node.TryGetValue("version", ref version);
 
-            for (int i = 0; i < keyNode.values.Count; ++i)
+            for (int i = 0; i < valueNode.nodes.Count; ++i)
             {
-                TKey key = ParseKey(keyNode.values[i].value);
-
-                var n = valueNode.nodes[i];
-                TValue value;
-                if (version == 1 || n.name == "VALUE" || n.name == _typeName)
-                {
-                    value = Activator.CreateInstance<TValue>();
-                }
-                else
-                {
-                    if (!_typeCache.TryGetValue(n.name, out var type))
-                        type = HarmonyLib.AccessTools.TypeByName(n.name);
-                    if (type == null || !_type.IsAssignableFrom(type))
-                        type = _type;
-                    else
-                        _typeCache[n.name] = type;
-
-                    value = (TValue)Activator.CreateInstance(type);
-                }
-                value.Load(n);
+                TKey key = GetKey(i, keyNode);
+                TValue value = GetValue(i, valueNode);
                 Add(key, value);
             }
         }
@@ -58,21 +71,51 @@ namespace ROUtils.DataTypes
 
             foreach (var kvp in this)
             {
-                keyNode.AddValue("key", WriteKey(kvp.Key));
-                var type = kvp.Value.GetType();
-                ConfigNode n = new ConfigNode(type == _type ? _typeName : type.FullName);
-                kvp.Value.Save(n);
-                valueNode.AddNode(n);
+                AddKey(kvp.Key, keyNode);
+                AddValue(kvp.Value, valueNode);
             }
         }
     }
 
-    public class PersistentDictionaryNodeKeyed<TValue> : Dictionary<string, TValue>, IConfigNode where TValue : IConfigNode
+    public class PersistentDictionaryBothObjects<TKey, TValue> : PersistentDictionary<TKey, TValue>, IConfigNode where TKey : IConfigNode where TValue : IConfigNode
     {
-        private static readonly Type _type = typeof(TValue);
-        private static readonly string _typeName = typeof(TValue).Name;
-        private static readonly Dictionary<string, Type> _typeCache = new Dictionary<string, Type>();
+        protected static readonly Type _KeyType = typeof(TKey);
+        protected static readonly string _KeyTypeName = typeof(TKey).Name;
 
+        protected override TKey GetKey(int i, ConfigNode keyNode)
+        {
+            var n = keyNode.nodes[i];
+            TKey key;
+            if (version == 1 || n.name == "KEY" || n.name == _KeyTypeName)
+            {
+                key = Activator.CreateInstance<TKey>();
+            }
+            else
+            {
+                if (!_TypeCache.TryGetValue(n.name, out var type))
+                    type = HarmonyLib.AccessTools.TypeByName(n.name);
+                if (type == null || !_KeyType.IsAssignableFrom(type))
+                    type = _KeyType;
+                else
+                    _TypeCache[n.name] = type;
+
+                key = (TKey)Activator.CreateInstance(type);
+            }
+            key.Load(n);
+            return key;
+        }
+
+        protected override void AddKey(TKey key, ConfigNode keyNode)
+        {
+            var type = key.GetType();
+            ConfigNode n = new ConfigNode(type == _KeyType ? _KeyTypeName : type.FullName);
+            key.Save(n);
+            keyNode.AddNode(n);
+        }
+    }
+
+    public class PersistentDictionaryNodeKeyed<TValue> : PersistentDictionary<string, TValue>, IConfigNode where TValue : IConfigNode
+    {
         private string _keyName = "name";
 
         public PersistentDictionaryNodeKeyed() {}
@@ -82,52 +125,43 @@ namespace ROUtils.DataTypes
             _keyName = keyName;
         }
 
-        public void Load(ConfigNode node)
+        protected override string GetKey(int i, ConfigNode keyNode)
+        {
+            return keyNode.nodes[i].GetValue(_keyName);
+        }
+
+        protected override void AddKey(string key, ConfigNode keyNode)
+        {
+            keyNode.SetValue(_keyName, key, true);
+        }
+
+        public new void Load(ConfigNode node)
         {
             Clear();
-            int version = 1;
+            version = 1;
             node.TryGetValue("version", ref version);
             for (int i = 0; i < node.nodes.Count; ++i)
             {
-                var n = node.nodes[i];
-                string key = n.GetValue(_keyName);
+                string key = GetKey(i, node);
                 if (string.IsNullOrEmpty(key))
                 {
-                    Debug.LogError("PersistentDictionaryNodeKeyed: null or empty key in node! Skipping. Node=\n" + n.ToString());
+                    Debug.LogError("PersistentDictionaryNodeKeyed: null or empty key in node! Skipping. Node=\n" + node.nodes[i].ToString());
                     continue;
                 }
 
-                TValue value;
-                if (version == 1 || n.name == "VALUE" || n.name == _typeName)
-                {
-                    value = Activator.CreateInstance<TValue>();
-                }
-                else
-                {
-                    if (!_typeCache.TryGetValue(n.name, out var type))
-                        type = HarmonyLib.AccessTools.TypeByName(n.name);
-                    if (type == null || !_type.IsAssignableFrom(type))
-                        type = _type;
-                    else
-                        _typeCache[n.name] = type;
-
-                    value = (TValue)Activator.CreateInstance(type);
-                }
-                value.Load(n);
+                TValue value = GetValue(i, node);
                 Add(key, value);
             }
         }
 
-        public void Save(ConfigNode node)
+        public new void Save(ConfigNode node)
         {
             node.AddValue("version", 2);
             foreach (var kvp in this)
             {
-                var type = kvp.Value.GetType();
-                ConfigNode n = new ConfigNode(type == _type ? _typeName : type.FullName);
-                kvp.Value.Save(n);
-                n.SetValue(_keyName, kvp.Key, true);
-                node.AddNode(n);
+                AddValue(kvp.Value, node); // this creates the node
+                // and it will be the last node. So put the key there.
+                node.nodes[node.nodes.Count - 1].SetValue(_keyName, kvp.Key, true);
             }
         }
     }
@@ -142,14 +176,14 @@ namespace ROUtils.DataTypes
         private static readonly Type _KeyType = typeof(TKey);
         private static readonly DataType _KeyDataType = FieldData.ValueDataType(_KeyType);
 
-        protected override TKey ParseKey(string value)
+        protected override TKey GetKey(int i, ConfigNode keyNode)
         {
-            return (TKey)FieldData.ReadValue(value, _KeyDataType, _KeyType);
+            return (TKey)FieldData.ReadValue(keyNode.values[i].value, _KeyDataType, _KeyType);
         }
 
-        protected override string WriteKey(TKey key)
+        protected override void AddKey(TKey key, ConfigNode keyNode)
         {
-            return FieldData.WriteValue(key, _KeyDataType);
+            keyNode.AddValue("key", FieldData.WriteValue(key, _KeyDataType));
         }
     }
 

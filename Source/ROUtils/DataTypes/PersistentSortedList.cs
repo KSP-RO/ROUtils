@@ -6,9 +6,9 @@ namespace ROUtils.DataTypes
 {
     public abstract class PersistentSortedList<TKey, TValue> : SortedList<TKey, TValue>, IConfigNode where TValue : IConfigNode
     {
-        private static readonly Type _type = typeof(TValue);
-        private static readonly string _typeName = typeof(TValue).Name;
-        private static readonly Dictionary<string, Type> _typeCache = new Dictionary<string, Type>();
+        private static readonly Type _Type = typeof(TValue);
+        private static readonly string _TypeName = typeof(TValue).Name;
+        private static readonly Dictionary<string, Type> _TypeCache = new Dictionary<string, Type>();
 
         protected abstract TKey ParseKey(string key);
 
@@ -28,18 +28,18 @@ namespace ROUtils.DataTypes
 
                 var n = valueNode.nodes[i];
                 TValue value;
-                if (version == 1 || n.name == "VALUE" || n.name == _typeName)
+                if (version == 1 || n.name == "VALUE" || n.name == _TypeName)
                 {
                     value = Activator.CreateInstance<TValue>();
                 }
                 else
                 {
-                    if (!_typeCache.TryGetValue(n.name, out var type))
+                    if (!_TypeCache.TryGetValue(n.name, out var type))
                         type = HarmonyLib.AccessTools.TypeByName(n.name);
-                    if (type == null || !_type.IsAssignableFrom(type))
-                        type = _type;
+                    if (type == null || !_Type.IsAssignableFrom(type))
+                        type = _Type;
                     else
-                        _typeCache[n.name] = type;
+                        _TypeCache[n.name] = type;
 
                     value = (TValue)Activator.CreateInstance(type);
                 }
@@ -58,7 +58,7 @@ namespace ROUtils.DataTypes
             {
                 keyNode.AddValue("key", WriteKey(kvp.Key));
                 var type = kvp.Value.GetType();
-                ConfigNode n = new ConfigNode(type == _type ? _typeName : type.FullName);
+                ConfigNode n = new ConfigNode(type == _Type ? _TypeName : type.FullName);
                 kvp.Value.Save(n);
                 valueNode.AddNode(n);
             }
