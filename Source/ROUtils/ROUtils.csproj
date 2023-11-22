@@ -117,6 +117,7 @@
     <Compile Include="DataTypes\Misc.cs" />
     <Compile Include="DataTypes\PersistentCompressedConfigNode.cs" />
     <Compile Include="DataTypes\PersistentCollectionDictionary.cs" />
+    <Compile Include="DataTypes\DictionaryHelpers.cs" />
     <Compile Include="DataTypes\PersistentDictionary.cs" />
     <Compile Include="DataTypes\PersistentHashSet.cs" />
     <Compile Include="DataTypes\PersistentList.cs" />
