@@ -5,6 +5,24 @@ using UnityEngine;
 
 namespace ROUtils.DataTypes
 {
+    public class PersistentDictionaryGeneric<TKey, TValue, TPersist> : Dictionary<TKey, TValue>, IConfigNode where TPersist : DictionaryPersistence<TKey, TValue>
+    {
+        protected TPersist _persister;
+        protected static readonly Type _PersistType = typeof(TPersist);
+
+        public PersistentDictionaryGeneric() { _persister = Activator.CreateInstance(_PersistType, new object[] { this }) as TPersist; }
+
+        public void Load(ConfigNode node)
+        {
+            _persister.Load(node);
+        }
+
+        public void Save(ConfigNode node)
+        {
+            _persister.Save(node);
+        }
+    }
+
     public abstract class PersistentDictionary<TKey, TValue> : Dictionary<TKey, TValue>, IConfigNode
     {
         protected DictionaryPersistence<TKey, TValue> _persister;
@@ -105,6 +123,38 @@ namespace ROUtils.DataTypes
 
     // Due to lack of multiple inheritance, this is a bunch of copypasta.
     // Happily all each class needs is the add and remove methods and the AllValues collection/constructor
+
+    public class PersistentDictionaryGeneric<TKey, TValue, TCollection, TPersist> : PersistentDictionaryGeneric<TKey, TCollection, TPersist>
+        where TPersist : DictionaryPersistence<TKey, TCollection>
+        where TCollection : ICollection<TValue>, IConfigNode, new()
+    {
+        public PersistentDictionaryGeneric() { _persister = Activator.CreateInstance(_PersistType, new object[] { this }) as TPersist; }
+
+        public void Add(TKey key, TValue value)
+        {
+            if (!TryGetValue(key, out var coll))
+            {
+                coll = new TCollection();
+                Add(key, coll);
+            }
+
+            coll.Add(value);
+        }
+
+        public bool Remove(TKey key, TValue value)
+        {
+            if (!TryGetValue(key, out var coll))
+                return false;
+
+            if (!coll.Remove(value))
+                return false;
+
+            if (coll.Count == 0)
+                Remove(key);
+
+            return true;
+        }
+    }
 
     public class PersistentDictionaryBothObjects<TKey, TValue, TCollection> : PersistentDictionaryBothObjects<TKey, TCollection>, IConfigNode where TKey : IConfigNode where TCollection : ICollection<TValue>, IConfigNode, new()
     {
