@@ -5,16 +5,12 @@ using UnityEngine;
 
 namespace ROUtils.DataTypes
 {
-    public abstract class IDictionaryPersistence<TKey, TValue> : IConfigNode
+    public abstract class IDictionaryPersistence<TKey, TValue> : PersistenceHelper, IConfigNode
     {
         protected static readonly Type _KeyType = typeof(TKey);
         protected static readonly Type _ValueType = typeof(TValue);
-        protected static readonly Dictionary<string, Type> _TypeCache = new Dictionary<string, Type>();
 
         protected IDictionary<TKey, TValue> _dict;
-
-        protected const int VERSION = 3;
-        protected int version; // will be set on load
 
         public IDictionaryPersistence(IDictionary<TKey, TValue> dict) { _dict = dict; }
 
@@ -26,6 +22,8 @@ namespace ROUtils.DataTypes
     public abstract class IDictionaryPersistenceValueNode<TKey, TValue> : IDictionaryPersistence<TKey, TValue> where TValue: IConfigNode
     {
         protected static readonly string _ValueTypeName = typeof(TValue).Name;
+        protected static readonly int _ValueTypeHash = _ValueTypeName.GetHashCode();
+        protected static readonly int _DefaultValueNameHash = "VALUE".GetHashCode();
 
         public IDictionaryPersistenceValueNode(IDictionary<TKey, TValue> dict) : base(dict) { }
 
@@ -36,20 +34,14 @@ namespace ROUtils.DataTypes
         {
             var n = valueNode.nodes[i];
             TValue value;
-            if (version == 1 || n.name == "VALUE" || n.name == _ValueTypeName)
+            int hash = n.name.GetHashCode();
+            if (_version == 1 || hash == _DefaultValueNameHash || hash == _ValueTypeHash)
             {
                 value = Activator.CreateInstance<TValue>();
             }
             else
             {
-                if (!_TypeCache.TryGetValue(n.name, out var type))
-                    type = HarmonyLib.AccessTools.TypeByName(n.name);
-                if (type == null || !_ValueType.IsAssignableFrom(type))
-                    type = _ValueType;
-                else
-                    _TypeCache[n.name] = type;
-
-                value = (TValue)Activator.CreateInstance(type);
+                value = (TValue)Activator.CreateInstance(GetTypeFromString(n.name, hash, _ValueType));
             }
             value.Load(n);
             return value;
@@ -68,8 +60,8 @@ namespace ROUtils.DataTypes
             _dict.Clear();
             ConfigNode keyNode = node.nodes[0];
             ConfigNode valueNode = node.nodes[1];
-            version = 1;
-            node.TryGetValue("version", ref version);
+            _version = 1;
+            node.TryGetValue("version", ref _version);
 
             int c = valueNode.nodes.Count;
             for (int i = 0; i < c; ++i)
@@ -78,12 +70,12 @@ namespace ROUtils.DataTypes
                 TValue value = GetValue(i, valueNode);
                 _dict.Add(key, value);
             }
-            version = VERSION;
+            _version = VERSION;
         }
 
         public override void Save(ConfigNode node)
         {
-            node.AddValue("version", version);
+            node.AddValue("version", _version);
             ConfigNode keyNode = node.AddNode("Keys");
             ConfigNode valueNode = node.AddNode("Values");
 
@@ -98,6 +90,8 @@ namespace ROUtils.DataTypes
     public class IDictionaryPersistenceBothObjects<TKey, TValue> : IDictionaryPersistenceValueNode<TKey, TValue> where TKey : IConfigNode where TValue : IConfigNode
     {
         protected static readonly string _KeyTypeName = typeof(TKey).Name;
+        protected static readonly int _KeyTypeHash = _KeyTypeName.GetHashCode();
+        protected static readonly int _DefaultKeyNameHash = "KEY".GetHashCode();
 
         public IDictionaryPersistenceBothObjects(IDictionary<TKey, TValue> dict) : base(dict) { }
 
@@ -105,20 +99,14 @@ namespace ROUtils.DataTypes
         {
             var n = keyNode.nodes[i];
             TKey key;
-            if (version == 1 || n.name == "KEY" || n.name == _KeyTypeName)
+            int hash = n.name.GetHashCode();
+            if (_version == 1 || hash == _DefaultKeyNameHash || hash == _KeyTypeHash)
             {
                 key = Activator.CreateInstance<TKey>();
             }
             else
             {
-                if (!_TypeCache.TryGetValue(n.name, out var type))
-                    type = HarmonyLib.AccessTools.TypeByName(n.name);
-                if (type == null || !_KeyType.IsAssignableFrom(type))
-                    type = _KeyType;
-                else
-                    _TypeCache[n.name] = type;
-
-                key = (TKey)Activator.CreateInstance(type);
+                key = (TKey)Activator.CreateInstance(GetTypeFromString(n.name, hash, _KeyType));
             }
             key.Load(n);
             return key;
@@ -159,8 +147,8 @@ namespace ROUtils.DataTypes
         public override void Load(ConfigNode node)
         {
             _dict.Clear();
-            version = 1;
-            node.TryGetValue("version", ref version);
+            _version = 1;
+            node.TryGetValue("version", ref _version);
             for (int i = 0; i < node.nodes.Count; ++i)
             {
                 TKey key = GetKey(i, node);
@@ -173,12 +161,12 @@ namespace ROUtils.DataTypes
                 TValue value = GetValue(i, node);
                 _dict.Add(key, value);
             }
-            version = VERSION;
+            _version = VERSION;
         }
 
         public override void Save(ConfigNode node)
         {
-            node.AddValue("version", version);
+            node.AddValue("version", _version);
             foreach (var kvp in _dict)
             {
                 AddValue(kvp.Value, node);

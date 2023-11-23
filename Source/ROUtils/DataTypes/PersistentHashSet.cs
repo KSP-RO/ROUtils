@@ -4,86 +4,53 @@ using KSPCommunityFixes.Modding;
 
 namespace ROUtils.DataTypes
 {
-    public class PersistentHashSet<T> : HashSet<T>, IConfigNode where T : IConfigNode
+    public abstract class PersistentHashSetBase<T> : HashSet<T>, IConfigNode
     {
-        private static readonly Type _Type = typeof(T);
-        private static readonly string _TypeName = typeof(T).Name;
-        private static readonly Dictionary<string, Type> _TypeCache = new Dictionary<string, Type>();
-
         public void Load(ConfigNode node)
         {
-            Clear();
-            int version = 1;
-            node.TryGetValue("version", ref version);
-
-            foreach (ConfigNode n in node.nodes)
-            {
-                T item;
-                if (version == 1 || n.name == "ITEM" || n.name == _TypeName)
-                {
-                    item = Activator.CreateInstance<T>();
-                }
-                else
-                {
-                    if (!_TypeCache.TryGetValue(n.name, out var type))
-                        type = HarmonyLib.AccessTools.TypeByName(n.name);
-                    if (type == null || !_Type.IsAssignableFrom(type))
-                        type = _Type;
-                    else
-                        _TypeCache[n.name] = type;
-
-                    item = (T)Activator.CreateInstance(type);
-                }
-                item.Load(n);
-                Add(item);
-            }
+            ConfigNode.LoadObjectFromConfig(this, node);
         }
 
         public void Save(ConfigNode node)
         {
-            node.AddValue("version", 2);
-            foreach (var item in this)
-            {
-                var type = item.GetType();
-                ConfigNode n = new ConfigNode(type == _Type ? _TypeName : type.FullName);
-                item.Save(n);
-                node.AddNode(n);
-            }
+            ConfigNode.CreateConfigFromObject(this, node);
         }
+    }
+
+    public class PersistentHashSet<T> : PersistentHashSetBase<T> where T : IConfigNode
+    {
+        [Persistent]
+        protected ICollectionPersistenceNode<T> _helper;
+
+        public PersistentHashSet() { _helper = new ICollectionPersistenceNode<T>(this); }
+    }
+
+    public class PersistentParsableHashSet<T> : PersistentHashSetBase<T> where T : class
+    {
+        [Persistent]
+        protected ICollectionPersistenceParseable<T> _helper;
+
+        public PersistentParsableHashSet() { _helper = new ICollectionPersistenceParseable<T>(this); }
     }
 
     /// <summary>
     /// NOTE: This does not have constraints because string is supported
     /// but string is not a valuetype
     /// </summary>
-    public class PersistentHashSetValueType<T> : HashSet<T>, ICloneable, IConfigNode
+    public class PersistentHashSetValueType<T> : PersistentHashSetBase<T>, ICloneable
     {
-        private readonly static Type _Type = typeof(T);
-        private readonly static DataType _DataType = FieldData.ValueDataType(_Type);
+        [Persistent]
+        protected ICollectionPersistenceValueType<T> _helper;
 
-        public void Load(ConfigNode node)
-        {
-            Clear();
-            foreach (ConfigNode.Value v in node.values)
-            {
-                T item = (T)FieldData.ReadValue(v.value, _DataType, _Type);
-                Add(item);
-            }
-        }
-
-        public void Save(ConfigNode node)
-        {
-            foreach (var item in this)
-            {
-                node.AddValue("item", FieldData.WriteValue(item, _DataType));
-            }
-        }
+        public PersistentHashSetValueType() { _helper = new ICollectionPersistenceValueType<T>(this); }
 
         public object Clone()
         {
             var clone = new PersistentHashSetValueType<T>();
-            foreach (var key in this)
-                clone.Add(key);
+            foreach (var v in this)
+            {
+                clone.Add(v);
+            }
 
             return clone;
         }

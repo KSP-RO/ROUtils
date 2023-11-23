@@ -4,54 +4,27 @@ using KSPCommunityFixes.Modding;
 
 namespace ROUtils.DataTypes
 {
-    public class PersistentList<T> : List<T>, IConfigNode, ICloneable where T : IConfigNode
+    public abstract class PersistentListBase<T> : List<T>, IConfigNode
     {
-        private static readonly Type _Type = typeof(T);
-        private static readonly string _TypeName = typeof(T).Name;
-        private static readonly Dictionary<string, Type> _TypeCache = new Dictionary<string, Type>();
-
-        public virtual void Load(ConfigNode node)
+        public void Load(ConfigNode node)
         {
-            Clear();
-            int version = 1;
-            node.TryGetValue("version", ref version);
-
-            foreach (ConfigNode n in node.nodes)
-            {
-                T item;
-                if (version == 1 || n.name == "ITEM" || n.name == _TypeName)
-                {
-                    item = Activator.CreateInstance<T>();
-                }
-                else
-                {
-                    if (!_TypeCache.TryGetValue(n.name, out var type))
-                        type = HarmonyLib.AccessTools.TypeByName(n.name);
-                    if (type == null || !_Type.IsAssignableFrom(type))
-                        type = _Type;
-                    else
-                        _TypeCache[n.name] = type;
-
-                    item = (T)Activator.CreateInstance(type);
-                }
-                item.Load(n);
-                Add(item);
-            }
+            ConfigNode.LoadObjectFromConfig(this, node);
         }
 
         public void Save(ConfigNode node)
         {
-            node.AddValue("version", 2);
-            foreach (var item in this)
-            {
-                var type = item.GetType();
-                ConfigNode n = new ConfigNode(type == _Type ? _TypeName : type.FullName);
-                item.Save(n);
-                node.AddNode(n);
-            }
+            ConfigNode.CreateConfigFromObject(this, node);
         }
+    }
 
-        public virtual object Clone()
+    public class PersistentList<T> : PersistentListBase<T>, ICloneable where T : IConfigNode
+    {
+        [Persistent]
+        protected ICollectionPersistenceNode<T> _helper;
+
+        public PersistentList() { _helper = new ICollectionPersistenceNode<T>(this); }
+
+        public object Clone()
         {
             var clone = new PersistentList<T>();
             foreach (var v in this)
@@ -74,80 +47,34 @@ namespace ROUtils.DataTypes
         }
     }
 
-    public class PersistentParsableList<T> : List<T>, IConfigNode where T : class
+    public class PersistentParsableList<T> : PersistentListBase<T> where T : class
     {
-        private enum ParseableType
-        {
-            INVALID,
-            ProtoCrewMember,
-        }
+        [Persistent]
+        protected ICollectionPersistenceParseable<T> _helper;
 
-        private static ParseableType GetParseableType(Type t)
-        {
-            if (t == typeof(ProtoCrewMember))
-                return ParseableType.ProtoCrewMember;
-
-            return ParseableType.INVALID;
-        }
-
-        private static readonly ParseableType _ParseType = GetParseableType(typeof(T)); 
-
-        private T Parse(string s)
-        {
-            switch(_ParseType)
-            {
-                case ParseableType.ProtoCrewMember:
-                    return HighLogic.CurrentGame.CrewRoster[s] as T;
-            }
-
-            return null;
-        }
-
-        public void Load(ConfigNode node)
-        {
-            Clear();
-            foreach (ConfigNode.Value v in node.values)
-            {
-                T item = Parse(v.value);
-                if (item != null)
-                    Add(item);
-            }
-        }
-
-        public void Save(ConfigNode node)
-        {
-            foreach (var item in this)
-            {
-                node.AddValue("item", item.ToString());
-            }
-        }
+        public PersistentParsableList() { _helper = new ICollectionPersistenceParseable<T>(this); }
     }
 
     /// <summary>
     /// NOTE: This does not have constraints because string is supported
     /// but string is not a valuetype
     /// </summary>
-    public class PersistentListValueType<T> : List<T>, IConfigNode
+    public class PersistentListValueType<T> : PersistentListBase<T>, ICloneable
     {
-        private readonly static Type _Type = typeof(T);
-        private readonly static DataType _DataType = FieldData.ValueDataType(_Type);
+        [Persistent]
+        protected ICollectionPersistenceValueType<T> _helper;
 
-        public void Load(ConfigNode node)
-        {
-            Clear();
-            foreach (ConfigNode.Value v in node.values)
-            {
-                T item = (T)FieldData.ReadValue(v.value, _DataType, _Type);
-                Add(item);
-            }
-        }
+        public PersistentListValueType() { _helper = new ICollectionPersistenceValueType<T>(this); }
 
-        public void Save(ConfigNode node)
+        public object Clone()
         {
-            foreach (var item in this)
+            var clone = new PersistentListValueType<T>();
+            foreach (var v in this)
             {
-                node.AddValue("item", FieldData.WriteValue(item, _DataType));
+                clone.Add(v);
             }
+
+            return clone;
         }
     }
 
@@ -272,7 +199,7 @@ namespace ROUtils.DataTypes
             }
         }
 
-        public override void Load(ConfigNode node)
+        public new void Load(ConfigNode node)
         {
             base.Load(node);
             for (int i = 0; i < Count; ++i)

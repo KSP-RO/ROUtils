@@ -114,6 +114,7 @@
   </Target>
   <Import Project="..\packages\Krafs.Publicizer.1.0.3\build\Krafs.Publicizer.targets" Condition="Exists('..\packages\Krafs.Publicizer.1.0.3\build\Krafs.Publicizer.targets')" />
   <ItemGroup>
+    <Compile Include="DataTypes\CollectionHelpers.cs" />
     <Compile Include="DataTypes\Misc.cs" />
     <Compile Include="DataTypes\PersistentCompressedConfigNode.cs" />
     <Compile Include="DataTypes\PersistentCollectionDictionary.cs" />
