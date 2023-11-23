@@ -6,31 +6,27 @@ namespace ROUtils.DataTypes
 {
     public abstract class PersistentHashSetBase<T> : HashSet<T>, IConfigNode
     {
+        protected CollectionPersistence<T> _persister;
+
         public void Load(ConfigNode node)
         {
-            ConfigNode.LoadObjectFromConfig(this, node);
+            _persister.Load(node);
         }
 
         public void Save(ConfigNode node)
         {
-            ConfigNode.CreateConfigFromObject(this, node);
+            _persister.Save(node);
         }
     }
 
     public class PersistentHashSet<T> : PersistentHashSetBase<T> where T : IConfigNode
     {
-        [Persistent]
-        protected ICollectionPersistenceNode<T> _helper;
-
-        public PersistentHashSet() { _helper = new ICollectionPersistenceNode<T>(this); }
+        public PersistentHashSet() { _persister = new CollectionPersistenceNode<T>(this); }
     }
 
     public class PersistentParsableHashSet<T> : PersistentHashSetBase<T> where T : class
     {
-        [Persistent]
-        protected ICollectionPersistenceParseable<T> _helper;
-
-        public PersistentParsableHashSet() { _helper = new ICollectionPersistenceParseable<T>(this); }
+        public PersistentParsableHashSet() { _persister = new CollectionPersistenceParseable<T>(this); }
     }
 
     /// <summary>
@@ -39,10 +35,7 @@ namespace ROUtils.DataTypes
     /// </summary>
     public class PersistentHashSetValueType<T> : PersistentHashSetBase<T>, ICloneable
     {
-        [Persistent]
-        protected ICollectionPersistenceValueType<T> _helper;
-
-        public PersistentHashSetValueType() { _helper = new ICollectionPersistenceValueType<T>(this); }
+        public PersistentHashSetValueType() { _persister = new CollectionPersistenceValueType<T>(this); }
 
         public object Clone()
         {

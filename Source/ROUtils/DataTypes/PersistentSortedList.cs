@@ -6,14 +6,16 @@ namespace ROUtils.DataTypes
 {
     public abstract class PersistentSortedList<TKey, TValue> : SortedList<TKey, TValue>, IConfigNode
     {
+        protected DictionaryPersistence<TKey, TValue> _persister;
+
         public void Load(ConfigNode node)
         {
-            ConfigNode.LoadObjectFromConfig(this, node);
+            _persister.Load(node);
         }
 
         public void Save(ConfigNode node)
         {
-            ConfigNode.CreateConfigFromObject(this, node);
+            _persister.Save(node);
         }
     }
 
@@ -24,20 +26,14 @@ namespace ROUtils.DataTypes
     /// <typeparam name="TValue"></typeparam>
     public class PersistentSortedListValueTypeKey<TKey, TValue> : PersistentSortedList<TKey, TValue> where TValue : IConfigNode
     {
-        [Persistent]
-        protected IDictionaryPersistenceValueTypeKey<TKey, TValue> _handler;
-
-        public PersistentSortedListValueTypeKey() { _handler = new IDictionaryPersistenceValueTypeKey<TKey, TValue>(this); }
+        public PersistentSortedListValueTypeKey() { _persister = new DictionaryPersistenceValueTypeKey<TKey, TValue>(this); }
     }
 
     public class PersistentSortedListNodeValueKeyed<TKey, TValue> : PersistentSortedList<TKey, TValue>, IConfigNode where TValue : IConfigNode
     {
-        [Persistent]
-        protected IDictionaryPersistenceNodeValueKeyed<TKey, TValue> _handler;
+        public PersistentSortedListNodeValueKeyed() { _persister = new DictionaryPersistenceNodeValueKeyed<TKey, TValue>(this); }
 
-        public PersistentSortedListNodeValueKeyed() { _handler = new IDictionaryPersistenceNodeValueKeyed<TKey, TValue>(this); }
-
-        public PersistentSortedListNodeValueKeyed(string keyName) { _handler = new IDictionaryPersistenceNodeValueKeyed<TKey, TValue>(this, keyName); }
+        public PersistentSortedListNodeValueKeyed(string keyName) { _persister = new DictionaryPersistenceNodeValueKeyed<TKey, TValue>(this, keyName); }
     }
 
     /// <summary>
@@ -48,10 +44,7 @@ namespace ROUtils.DataTypes
     /// <typeparam name="TValue"></typeparam>
     public class PersistentSortedListValueTypes<TKey, TValue> : PersistentSortedList<TKey, TValue>, IConfigNode
     {
-        [Persistent]
-        protected IDictionaryPersistenceValueTypes<TKey, TValue> _handler;
-
-        public PersistentSortedListValueTypes() { _handler = new IDictionaryPersistenceValueTypes<TKey, TValue>(this); }
+        public PersistentSortedListValueTypes() { _persister = new DictionaryPersistenceValueTypes<TKey, TValue>(this); }
     }
 
     // Due to lack of multiple inheritance, this is a bunch of copypasta.

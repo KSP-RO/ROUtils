@@ -7,23 +7,22 @@ namespace ROUtils.DataTypes
 {
     public abstract class PersistentDictionary<TKey, TValue> : Dictionary<TKey, TValue>, IConfigNode
     {
+        protected DictionaryPersistence<TKey, TValue> _persister;
+
         public void Load(ConfigNode node)
         {
-            ConfigNode.LoadObjectFromConfig(this, node);
+            _persister.Load(node);
         }
 
         public void Save(ConfigNode node)
         {
-            ConfigNode.CreateConfigFromObject(this, node);
+            _persister.Save(node);
         }
     }
 
     public class PersistentDictionaryBothObjects<TKey, TValue> : PersistentDictionary<TKey, TValue>, IConfigNode where TKey : IConfigNode where TValue : IConfigNode
     {
-        [Persistent]
-        protected IDictionaryPersistenceBothObjects<TKey, TValue> _handler;
-
-        public PersistentDictionaryBothObjects() { _handler = new IDictionaryPersistenceBothObjects<TKey, TValue>(this); }
+        public PersistentDictionaryBothObjects() { _persister = new DictionaryPersistenceBothObjects<TKey, TValue>(this); }
     }
 
     /// <summary>
@@ -33,12 +32,20 @@ namespace ROUtils.DataTypes
     /// <typeparam name="TValue"></typeparam>
     public class PersistentDictionaryNodeValueKeyed<TKey, TValue> : PersistentDictionary<TKey, TValue>, IConfigNode where TValue : IConfigNode
     {
-        [Persistent]
-        protected IDictionaryPersistenceNodeValueKeyed<TKey, TValue> _handler;
-
-        public PersistentDictionaryNodeValueKeyed() { _handler = new IDictionaryPersistenceNodeValueKeyed<TKey, TValue>(this); }
+        public PersistentDictionaryNodeValueKeyed() { _persister = new DictionaryPersistenceNodeValueKeyed<TKey, TValue>(this); }
         
-        public PersistentDictionaryNodeValueKeyed(string keyName) { _handler = new IDictionaryPersistenceNodeValueKeyed<TKey, TValue>(this, keyName); }
+        public PersistentDictionaryNodeValueKeyed(string keyName) { _persister = new DictionaryPersistenceNodeValueKeyed<TKey, TValue>(this, keyName); }
+    }
+
+    /// <summary>
+    /// Loads a string from a node but stores as a separate int hashcode key
+    /// </summary>
+    /// <typeparam name="TValue"></typeparam>
+    public class PersistentDictionaryNodeStringHashKeyed<TValue> : PersistentDictionary<int, TValue>, IConfigNode where TValue : IConfigNode
+    {
+        public PersistentDictionaryNodeStringHashKeyed() { _persister = new DictionaryPersistenceNodeStringHashKeyed<TValue>(this); }
+
+        public PersistentDictionaryNodeStringHashKeyed(string keyName) { _persister = new DictionaryPersistenceNodeStringHashKeyed<TValue>(this, keyName); }
     }
 
     /// <summary>
@@ -56,10 +63,7 @@ namespace ROUtils.DataTypes
     /// <typeparam name="TValue"></typeparam>
     public class PersistentDictionaryValueTypeKey<TKey, TValue> : PersistentDictionary<TKey, TValue> where TValue : IConfigNode
     {
-        [Persistent]
-        protected IDictionaryPersistenceValueTypeKey<TKey, TValue> _handler;
-
-        public PersistentDictionaryValueTypeKey() { _handler = new IDictionaryPersistenceValueTypeKey<TKey, TValue>(this); }
+        public PersistentDictionaryValueTypeKey() { _persister = new DictionaryPersistenceValueTypeKey<TKey, TValue>(this); }
     }
 
     /// <summary>
@@ -70,10 +74,7 @@ namespace ROUtils.DataTypes
     /// <typeparam name="TValue"></typeparam>
     public class PersistentDictionaryValueTypes<TKey, TValue> : PersistentDictionary<TKey, TValue>, ICloneable, IConfigNode
     {
-        [Persistent]
-        protected IDictionaryPersistenceValueTypes<TKey, TValue> _handler;
-
-        public PersistentDictionaryValueTypes() { _handler = new IDictionaryPersistenceValueTypes<TKey, TValue>(this); }
+        public PersistentDictionaryValueTypes() { _persister = new DictionaryPersistenceValueTypes<TKey, TValue>(this); }
 
         public void Clone(PersistentDictionaryValueTypes<TKey, TValue> source)
         {

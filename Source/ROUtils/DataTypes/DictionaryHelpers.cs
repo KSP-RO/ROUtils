@@ -5,27 +5,27 @@ using UnityEngine;
 
 namespace ROUtils.DataTypes
 {
-    public abstract class IDictionaryPersistence<TKey, TValue> : PersistenceHelper, IConfigNode
+    public abstract class DictionaryPersistence<TKey, TValue> : PersistenceHelper, IConfigNode
     {
         protected static readonly Type _KeyType = typeof(TKey);
         protected static readonly Type _ValueType = typeof(TValue);
 
         protected IDictionary<TKey, TValue> _dict;
 
-        public IDictionaryPersistence(IDictionary<TKey, TValue> dict) { _dict = dict; }
+        public DictionaryPersistence(IDictionary<TKey, TValue> dict) { _dict = dict; }
 
         public abstract void Load(ConfigNode node);
 
         public abstract void Save(ConfigNode node);
     }
 
-    public abstract class IDictionaryPersistenceValueNode<TKey, TValue> : IDictionaryPersistence<TKey, TValue> where TValue: IConfigNode
+    public abstract class DictionaryPersistenceValueNode<TKey, TValue> : DictionaryPersistence<TKey, TValue> where TValue: IConfigNode
     {
         protected static readonly string _ValueTypeName = typeof(TValue).Name;
         protected static readonly int _ValueTypeHash = _ValueTypeName.GetHashCode();
         protected static readonly int _DefaultValueNameHash = "VALUE".GetHashCode();
 
-        public IDictionaryPersistenceValueNode(IDictionary<TKey, TValue> dict) : base(dict) { }
+        public DictionaryPersistenceValueNode(IDictionary<TKey, TValue> dict) : base(dict) { }
 
         protected abstract TKey GetKey(int i, ConfigNode keyNode);
         protected abstract void AddKey(TKey key, ConfigNode keyNode);
@@ -87,13 +87,13 @@ namespace ROUtils.DataTypes
         }
     }
 
-    public class IDictionaryPersistenceBothObjects<TKey, TValue> : IDictionaryPersistenceValueNode<TKey, TValue> where TKey : IConfigNode where TValue : IConfigNode
+    public class DictionaryPersistenceBothObjects<TKey, TValue> : DictionaryPersistenceValueNode<TKey, TValue> where TKey : IConfigNode where TValue : IConfigNode
     {
         protected static readonly string _KeyTypeName = typeof(TKey).Name;
         protected static readonly int _KeyTypeHash = _KeyTypeName.GetHashCode();
         protected static readonly int _DefaultKeyNameHash = "KEY".GetHashCode();
 
-        public IDictionaryPersistenceBothObjects(IDictionary<TKey, TValue> dict) : base(dict) { }
+        public DictionaryPersistenceBothObjects(IDictionary<TKey, TValue> dict) : base(dict) { }
 
         protected override TKey GetKey(int i, ConfigNode keyNode)
         {
@@ -121,12 +121,12 @@ namespace ROUtils.DataTypes
         }
     }
 
-    public class IDictionaryPersistenceNodeValueKeyed<TKey, TValue> : IDictionaryPersistenceValueNode<TKey, TValue> where TValue : IConfigNode
+    public class DictionaryPersistenceNodeValueKeyed<TKey, TValue> : DictionaryPersistenceValueNode<TKey, TValue> where TValue : IConfigNode
     {
         protected static readonly DataType _KeyDataType = FieldData.ValueDataType(_KeyType);
         protected string _keyName = "name";
 
-        public IDictionaryPersistenceNodeValueKeyed(IDictionary<TKey, TValue> dict, string keyName = null) : base(dict)
+        public DictionaryPersistenceNodeValueKeyed(IDictionary<TKey, TValue> dict, string keyName = null) : base(dict)
         {
             if (keyName != null)
                 _keyName = keyName;
@@ -175,11 +175,57 @@ namespace ROUtils.DataTypes
         }
     }
 
-    public class IDictionaryPersistenceValueTypeKey<TKey, TValue> : IDictionaryPersistenceValueNode<TKey, TValue> where TValue : IConfigNode
+    public class DictionaryPersistenceNodeStringHashKeyed<TValue> : DictionaryPersistenceValueTypeKey<int, TValue> where TValue : IConfigNode
+    {
+        protected string _keyName = "name";
+
+        public DictionaryPersistenceNodeStringHashKeyed(IDictionary<int, TValue> dict, string keyName = null) : base(dict)
+        {
+            if (keyName != null)
+                _keyName = keyName;
+        }
+
+        public override void Load(ConfigNode node)
+        {
+            bool hasKeyNode = false;
+            node.TryGetValue("hasKeyNode", ref hasKeyNode);
+            if (hasKeyNode)
+            {
+                base.Load(node);
+                return;
+            }
+
+            _dict.Clear();
+            _version = 1;
+            node.TryGetValue("version", ref _version);
+            for (int i = 0; i < node.nodes.Count; ++i)
+            {
+                string key = node.nodes[i].GetValue(_keyName);
+                if (string.IsNullOrEmpty(key))
+                {
+                    Debug.LogError("DictionaryPersistenceNodeStringHashKeyed: null or empty key in node! Skipping. Node=\n" + node.nodes[i].ToString());
+                    continue;
+                }
+
+                TValue value = GetValue(i, node);
+                _dict.Add(key.GetHashCode(), value);
+            }
+            _version = VERSION;
+            return;
+        }
+
+        public override void Save(ConfigNode node)
+        {
+            base.Save(node);
+            node.AddValue("hasKeyNode", true);
+        }
+    }
+
+    public class DictionaryPersistenceValueTypeKey<TKey, TValue> : DictionaryPersistenceValueNode<TKey, TValue> where TValue : IConfigNode
     {
         protected static readonly DataType _KeyDataType = FieldData.ValueDataType(_KeyType);
 
-        public IDictionaryPersistenceValueTypeKey(IDictionary<TKey, TValue> dict) : base(dict) { }
+        public DictionaryPersistenceValueTypeKey(IDictionary<TKey, TValue> dict) : base(dict) { }
 
         protected override TKey GetKey(int i, ConfigNode keyNode)
         {
@@ -192,12 +238,12 @@ namespace ROUtils.DataTypes
         }
     }
 
-    public class IDictionaryPersistenceValueTypes<TKey, TValue> : IDictionaryPersistence<TKey, TValue>
+    public class DictionaryPersistenceValueTypes<TKey, TValue> : DictionaryPersistence<TKey, TValue>
     {
         protected static readonly DataType _KeyDataType = FieldData.ValueDataType(_KeyType);
         protected static readonly DataType _ValueDataType = FieldData.ValueDataType(_ValueType);
 
-        public IDictionaryPersistenceValueTypes(IDictionary<TKey, TValue> dict) : base(dict) { }
+        public DictionaryPersistenceValueTypes(IDictionary<TKey, TValue> dict) : base(dict) { }
 
         public override void Load(ConfigNode node)
         {

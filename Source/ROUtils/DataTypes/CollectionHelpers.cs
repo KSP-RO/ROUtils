@@ -36,26 +36,26 @@ namespace ROUtils.DataTypes
         }
     }
 
-    public abstract class ICollectionPersistence<T> : PersistenceHelper, IConfigNode
+    public abstract class CollectionPersistence<T> : PersistenceHelper, IConfigNode
     {
         protected static readonly Type _Type = typeof(T);
 
         protected ICollection<T> _coll;
 
-        public ICollectionPersistence(ICollection<T> coll) { _coll = coll; }
+        public CollectionPersistence(ICollection<T> coll) { _coll = coll; }
 
         public abstract void Load(ConfigNode node);
 
         public abstract void Save(ConfigNode node);
     }
 
-    public class ICollectionPersistenceNode<T> : ICollectionPersistence<T> where T : IConfigNode
+    public class CollectionPersistenceNode<T> : CollectionPersistence<T> where T : IConfigNode
     {
         protected static readonly string _TypeName = typeof(T).Name;
         protected static readonly int _TypeHash = _TypeName.GetHashCode();
         protected static readonly int _DefaultNodeNameHash = "ITEM".GetHashCode();
 
-        public ICollectionPersistenceNode(ICollection<T> coll) : base(coll) { }
+        public CollectionPersistenceNode(ICollection<T> coll) : base(coll) { }
 
         public override void Load(ConfigNode node)
         {
@@ -94,7 +94,7 @@ namespace ROUtils.DataTypes
         }
     }
 
-    public class ICollectionPersistenceParseable<T> : ICollectionPersistence<T> where T : class
+    public class CollectionPersistenceParseable<T> : CollectionPersistence<T> where T : class
     {
         private enum ParseableType
         {
@@ -116,7 +116,7 @@ namespace ROUtils.DataTypes
         protected static readonly int _TypeHash = _TypeName.GetHashCode();
         protected static readonly int _DefaultNodeNameHash = "ITEM".GetHashCode();
 
-        public ICollectionPersistenceParseable(ICollection<T> coll) : base(coll) { }
+        public CollectionPersistenceParseable(ICollection<T> coll) : base(coll) { }
 
         private T FromValue(ConfigNode.Value v)
         {
@@ -166,11 +166,11 @@ namespace ROUtils.DataTypes
     /// NOTE: This does not have constraints because string is supported
     /// but string is not a valuetype
     /// </summary>
-    public class ICollectionPersistenceValueType<T> : ICollectionPersistence<T>
+    public class CollectionPersistenceValueType<T> : CollectionPersistence<T>
     {
         protected static readonly DataType _DataType = FieldData.ValueDataType(_Type);
 
-        public ICollectionPersistenceValueType(ICollection<T> coll) : base(coll) { }
+        public CollectionPersistenceValueType(ICollection<T> coll) : base(coll) { }
 
         public override void Load(ConfigNode node)
         {

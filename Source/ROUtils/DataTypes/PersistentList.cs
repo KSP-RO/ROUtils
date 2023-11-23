@@ -6,23 +6,22 @@ namespace ROUtils.DataTypes
 {
     public abstract class PersistentListBase<T> : List<T>, IConfigNode
     {
+        protected CollectionPersistence<T> _persister;
+
         public void Load(ConfigNode node)
         {
-            ConfigNode.LoadObjectFromConfig(this, node);
+            _persister.Load(node);
         }
 
         public void Save(ConfigNode node)
         {
-            ConfigNode.CreateConfigFromObject(this, node);
+            _persister.Save(node);
         }
     }
 
     public class PersistentList<T> : PersistentListBase<T>, ICloneable where T : IConfigNode
     {
-        [Persistent]
-        protected ICollectionPersistenceNode<T> _helper;
-
-        public PersistentList() { _helper = new ICollectionPersistenceNode<T>(this); }
+        public PersistentList() { _persister = new CollectionPersistenceNode<T>(this); }
 
         public object Clone()
         {
@@ -49,10 +48,7 @@ namespace ROUtils.DataTypes
 
     public class PersistentParsableList<T> : PersistentListBase<T> where T : class
     {
-        [Persistent]
-        protected ICollectionPersistenceParseable<T> _helper;
-
-        public PersistentParsableList() { _helper = new ICollectionPersistenceParseable<T>(this); }
+        public PersistentParsableList() { _persister = new CollectionPersistenceParseable<T>(this); }
     }
 
     /// <summary>
@@ -61,10 +57,7 @@ namespace ROUtils.DataTypes
     /// </summary>
     public class PersistentListValueType<T> : PersistentListBase<T>, ICloneable
     {
-        [Persistent]
-        protected ICollectionPersistenceValueType<T> _helper;
-
-        public PersistentListValueType() { _helper = new ICollectionPersistenceValueType<T>(this); }
+        public PersistentListValueType() { _persister = new CollectionPersistenceValueType<T>(this); }
 
         public object Clone()
         {
