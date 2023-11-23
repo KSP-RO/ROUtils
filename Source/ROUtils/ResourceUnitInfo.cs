@@ -199,26 +199,26 @@ namespace ROUtils
                 if (Math.Abs(rate) > 0.1d)
                 {
                     string massRate = density * rate > 0d ? " - " + PrintMass(rate * density) : string.Empty;
-                    output += Localizer.Format("#autoLOC_244197", title, rate.ToString("0.0") + " " + unitRate + massRate);
+                    output += Localizer.Format("#autoLOC_244197", title, $"{rate:0.0} {unitRate}{massRate}");
                 }
                 else if (Math.Abs(rate) > (0.1d / 60d))
                 {
                     string massRate = density * rate > 0d ? " - " + PrintMass(rate * density * 60d) : string.Empty;
-                    output += Localizer.Format("#autoLOC_244201", title, (rate * 60d).ToString("0.0") + " " + unitRate + massRate);
+                    output += Localizer.Format("#autoLOC_244201", title, $"{rate * 60d:0.0} {unitRate}{massRate}");
                 }
                 else
                 {
                     string massRate = density * rate > 0d ? " - " + PrintMass(rate * density * 3600d) : string.Empty;
-                    output += Localizer.Format("#autoLOC_6002411", title, (rate * 3600d).ToString("0.0") + " " + unitRate + massRate);
+                    output += Localizer.Format("#autoLOC_6002411", title, $"{rate * 3600d:0.0} {unitRate}{massRate}");
                 }
             }
             else
             {
                 string massRate = density * rate > 0d ? " - " + Localizer.Format(PerSecLocString, PrintMass(rate * density)) : string.Empty;
                 if (useSI)
-                    output += "- <b>" + title + ": </b>" + PrintSI(rate, unitRate, sigFigs, longPrefix) + massRate + "\n";
+                    output += $"- <b>{title}: </b>{PrintSI(rate, unitRate, sigFigs, longPrefix)}{massRate}\n";
                 else
-                    output += Localizer.Format("#autoLOC_6002412", title, rate.ToString("0.000"), " "  + unitRate + massRate);
+                    output += Localizer.Format("#autoLOC_6002412", title, rate.ToString("0.000"), $" {unitRate}{massRate}");
             }
             if (showFlowMode && (p != null || definition != null))
             {
@@ -241,7 +241,7 @@ namespace ROUtils
                     return PrintSIAmount(amount, rui, sigFigs, longPrefix);
             }
 
-            return amount.ToString(precision) + " " + unit;
+            return $"{amount.ToString(precision)} {unit}";
         }
 
         public static string PrintSIRate(double rate, string unit, int sigFigs = 3, bool longPrefix = false)

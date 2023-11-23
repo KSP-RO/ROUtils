@@ -44,7 +44,7 @@ namespace ROUtils
                 HostedSingleton s = (HostedSingleton)Activator.CreateInstance(t, new System.Object[] { this });
                 _singletons.Add(s);
             }
-            string logstr = "Found and added " + _singletons.Count + " singletons:";
+            string logstr = $"Found and added {_singletons.Count} singletons:";
             foreach (var s in singletonTypes)
                 logstr += "\n" + s.FullName;
             Debug.Log(logstr);
