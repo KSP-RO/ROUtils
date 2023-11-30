@@ -55,7 +55,7 @@ namespace ROUtils.DataTypes
     /// </summary>
     /// <typeparam name="TKey"></typeparam>
     /// <typeparam name="TValue"></typeparam>
-    public class PersistentSortedListNodeValueKeyed<TKey, TValue, TCollection> : PersistentSortedListNodeValueKeyed<TKey, TCollection>, IConfigNode where TCollection : ICollection<TValue>, IConfigNode, new()
+    public class PersistentSortedListNodeValueKeyed<TKey, TValue, TCollection> : PersistentSortedListNodeValueKeyed<TKey, TCollection>, IReadOnlyCollectionDictionary<TKey, TValue, TCollection> where TCollection : ICollection<TValue>, IConfigNode, new()
     {
         private CollectionDictionaryAllValues<TKey, TValue, TCollection> _allValues;
         public CollectionDictionaryAllValues<TKey, TValue, TCollection> AllValues => _allValues;
@@ -95,7 +95,7 @@ namespace ROUtils.DataTypes
     /// </summary>
     /// <typeparam name="TKey"></typeparam>
     /// <typeparam name="TValue"></typeparam>
-    public class PersistentSortedListValueTypeKey<TKey, TValue, TCollection> : PersistentSortedListValueTypeKey<TKey, TCollection> where TCollection : ICollection<TValue>, IConfigNode, new()
+    public class PersistentSortedListValueTypeKey<TKey, TValue, TCollection> : PersistentSortedListValueTypeKey<TKey, TCollection>, IReadOnlyCollectionDictionary<TKey, TValue, TCollection> where TCollection : ICollection<TValue>, IConfigNode, new()
     {
         private CollectionDictionaryAllValues<TKey, TValue, TCollection> _allValues;
         public CollectionDictionaryAllValues<TKey, TValue, TCollection> AllValues => _allValues;
@@ -134,12 +134,52 @@ namespace ROUtils.DataTypes
     /// </summary>
     /// <typeparam name="TKey"></typeparam>
     /// <typeparam name="TValue"></typeparam>
-    public class PersistentSortedListValueTypes<TKey, TValue, TCollection> : PersistentSortedListValueTypeKey<TKey, TCollection>, IConfigNode where TCollection : ICollection<TValue>, IConfigNode, new()
+    public class PersistentSortedListValueTypes<TKey, TValue, TCollection> : PersistentSortedListValueTypeKey<TKey, TCollection>, IReadOnlyCollectionDictionary<TKey, TValue, TCollection> where TCollection : ICollection<TValue>, IConfigNode, new()
     {
         private CollectionDictionaryAllValues<TKey, TValue, TCollection> _allValues;
         public CollectionDictionaryAllValues<TKey, TValue, TCollection> AllValues => _allValues;
 
         public PersistentSortedListValueTypes() : base() { _allValues = new CollectionDictionaryAllValues<TKey, TValue, TCollection>(this); }
+
+        public void Add(TKey key, TValue value)
+        {
+            if (!TryGetValue(key, out var coll))
+            {
+                coll = new TCollection();
+                Add(key, coll);
+            }
+
+            coll.Add(value);
+        }
+
+        public bool Remove(TKey key, TValue value)
+        {
+            if (!TryGetValue(key, out var coll))
+                return false;
+
+            if (!coll.Remove(value))
+                return false;
+
+            if (coll.Count == 0)
+                Remove(key);
+
+            return true;
+        }
+    }
+
+    // Reimplementation of KSP's ListDictionary as SortedList - the non-persistent form of Collection-SortedLists as above.
+    public class CollectionSortedList<TKey, TValue, TCollection> : SortedList<TKey, TCollection>, IReadOnlyCollectionDictionary<TKey, TValue, TCollection> where TCollection : ICollection<TValue>, new()
+    {
+        private CollectionDictionaryAllValues<TKey, TValue, TCollection> _allValues;
+        public CollectionDictionaryAllValues<TKey, TValue, TCollection> AllValues => _allValues;
+
+        public CollectionSortedList() : base() { _allValues = new CollectionDictionaryAllValues<TKey, TValue, TCollection>(this); }
+
+        public CollectionSortedList(int capacity) : base(capacity) { _allValues = new CollectionDictionaryAllValues<TKey, TValue, TCollection>(this); }
+        public CollectionSortedList(IComparer<TKey> comparer) : base(comparer) { _allValues = new CollectionDictionaryAllValues<TKey, TValue, TCollection>(this); }
+        public CollectionSortedList(IDictionary<TKey, TCollection> dictionary) : base(dictionary) { _allValues = new CollectionDictionaryAllValues<TKey, TValue, TCollection>(this); }
+        public CollectionSortedList(int capacity, IComparer<TKey> comparer) : base(capacity, comparer) { _allValues = new CollectionDictionaryAllValues<TKey, TValue, TCollection>(this); }
+        public CollectionSortedList(IDictionary<TKey, TCollection> dictionary, IComparer<TKey> comparer) : base(dictionary, comparer) { _allValues = new CollectionDictionaryAllValues<TKey, TValue, TCollection>(this); }
 
         public void Add(TKey key, TValue value)
         {

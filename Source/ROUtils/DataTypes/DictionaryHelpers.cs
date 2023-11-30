@@ -5,6 +5,11 @@ using UnityEngine;
 
 namespace ROUtils.DataTypes
 {
+    public interface IReadOnlyCollectionDictionary<TKey, TValue, TCollection> : IReadOnlyDictionary<TKey, TCollection> where TCollection : ICollection<TValue>, new()
+    {
+        public CollectionDictionaryAllValues<TKey, TValue, TCollection> AllValues { get; }
+    }
+
     public abstract class DictionaryPersistence<TKey, TValue> : PersistenceHelper, IConfigNode
     {
         protected static readonly Type _KeyType = typeof(TKey);

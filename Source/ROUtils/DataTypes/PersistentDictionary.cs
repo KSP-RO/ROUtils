@@ -156,7 +156,7 @@ namespace ROUtils.DataTypes
         }
     }
 
-    public class PersistentDictionaryBothObjects<TKey, TValue, TCollection> : PersistentDictionaryBothObjects<TKey, TCollection>, IConfigNode where TKey : IConfigNode where TCollection : ICollection<TValue>, IConfigNode, new()
+    public class PersistentDictionaryBothObjects<TKey, TValue, TCollection> : PersistentDictionaryBothObjects<TKey, TCollection>, IReadOnlyCollectionDictionary<TKey, TValue, TCollection> where TKey : IConfigNode where TCollection : ICollection<TValue>, IConfigNode, new()
     {
         private CollectionDictionaryAllValues<TKey, TValue, TCollection> _allValues;
         public CollectionDictionaryAllValues<TKey, TValue, TCollection> AllValues => _allValues;
@@ -194,7 +194,7 @@ namespace ROUtils.DataTypes
     /// </summary>
     /// <typeparam name="TKey"></typeparam>
     /// <typeparam name="TValue"></typeparam>
-    public class PersistentDictionaryNodeValueKeyed<TKey, TValue, TCollection> : PersistentDictionaryNodeValueKeyed<TKey, TCollection>, IConfigNode where TCollection : ICollection<TValue>, IConfigNode, new()
+    public class PersistentDictionaryNodeValueKeyed<TKey, TValue, TCollection> : PersistentDictionaryNodeValueKeyed<TKey, TCollection>, IReadOnlyCollectionDictionary<TKey, TValue, TCollection> where TCollection : ICollection<TValue>, IConfigNode, new()
     {
         private CollectionDictionaryAllValues<TKey, TValue, TCollection> _allValues;
         public CollectionDictionaryAllValues<TKey, TValue, TCollection> AllValues => _allValues;
@@ -234,7 +234,7 @@ namespace ROUtils.DataTypes
     /// </summary>
     /// <typeparam name="TKey"></typeparam>
     /// <typeparam name="TValue"></typeparam>
-    public class PersistentDictionaryValueTypeKey<TKey, TValue, TCollection> : PersistentDictionaryValueTypeKey<TKey, TCollection> where TCollection : ICollection<TValue>, IConfigNode, new()
+    public class PersistentDictionaryValueTypeKey<TKey, TValue, TCollection> : PersistentDictionaryValueTypeKey<TKey, TCollection>, IReadOnlyCollectionDictionary<TKey, TValue, TCollection> where TCollection : ICollection<TValue>, IConfigNode, new()
     {
         private CollectionDictionaryAllValues<TKey, TValue, TCollection> _allValues;
         public CollectionDictionaryAllValues<TKey, TValue, TCollection> AllValues => _allValues;
@@ -273,12 +273,52 @@ namespace ROUtils.DataTypes
     /// </summary>
     /// <typeparam name="TKey"></typeparam>
     /// <typeparam name="TValue"></typeparam>
-    public class PersistentDictionaryValueTypes<TKey, TValue, TCollection> : PersistentDictionaryValueTypeKey<TKey, TCollection>, IConfigNode where TCollection : ICollection<TValue>, IConfigNode, new()
+    public class PersistentDictionaryValueTypes<TKey, TValue, TCollection> : PersistentDictionaryValueTypeKey<TKey, TCollection>, IReadOnlyCollectionDictionary<TKey, TValue, TCollection> where TCollection : ICollection<TValue>, IConfigNode, new()
     {
         private CollectionDictionaryAllValues<TKey, TValue, TCollection> _allValues;
         public CollectionDictionaryAllValues<TKey, TValue, TCollection> AllValues => _allValues;
 
         public PersistentDictionaryValueTypes() : base() { _allValues = new CollectionDictionaryAllValues<TKey, TValue, TCollection>(this); }
+
+        public void Add(TKey key, TValue value)
+        {
+            if (!TryGetValue(key, out var coll))
+            {
+                coll = new TCollection();
+                Add(key, coll);
+            }
+
+            coll.Add(value);
+        }
+
+        public bool Remove(TKey key, TValue value)
+        {
+            if (!TryGetValue(key, out var coll))
+                return false;
+
+            if (!coll.Remove(value))
+                return false;
+
+            if (coll.Count == 0)
+                Remove(key);
+
+            return true;
+        }
+    }
+
+    // Reimplementation of KSP's ListDictionary - the non-persistent form of Collection-dictionaries as above.
+    public class CollectionDictionary<TKey, TValue, TCollection> : Dictionary<TKey, TCollection>, IReadOnlyCollectionDictionary<TKey, TValue, TCollection> where TCollection : ICollection<TValue>, new()
+    {
+        private CollectionDictionaryAllValues<TKey, TValue, TCollection> _allValues;
+        public CollectionDictionaryAllValues<TKey, TValue, TCollection> AllValues => _allValues;
+
+        public CollectionDictionary() : base() { _allValues = new CollectionDictionaryAllValues<TKey, TValue, TCollection>(this); }
+
+        public CollectionDictionary(int capacity) : base(capacity) { _allValues = new CollectionDictionaryAllValues<TKey, TValue, TCollection>(this); }
+        public CollectionDictionary(IEqualityComparer<TKey> comparer) : base(comparer) { _allValues = new CollectionDictionaryAllValues<TKey, TValue, TCollection>(this); }
+        public CollectionDictionary(IDictionary<TKey, TCollection> dictionary) : base(dictionary) { _allValues = new CollectionDictionaryAllValues<TKey, TValue, TCollection>(this); }
+        public CollectionDictionary(int capacity, IEqualityComparer<TKey> comparer) : base(capacity, comparer) { _allValues = new CollectionDictionaryAllValues<TKey, TValue, TCollection>(this); }
+        public CollectionDictionary(IDictionary<TKey, TCollection> dictionary, IEqualityComparer<TKey> comparer) : base(dictionary, comparer) { _allValues = new CollectionDictionaryAllValues<TKey, TValue, TCollection>(this); }
 
         public void Add(TKey key, TValue value)
         {
