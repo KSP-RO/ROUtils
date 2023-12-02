@@ -72,6 +72,8 @@ namespace ROUtils.DataTypes
     /// <typeparam name="TValue"></typeparam>
     public class PersistentDictionaryNodeKeyed<TValue> : PersistentDictionaryNodeValueKeyed<string, TValue>, IConfigNode where TValue : IConfigNode
     {
+        public PersistentDictionaryNodeKeyed() : base() { }
+        public PersistentDictionaryNodeKeyed(string keyName) : base(keyName) { }
     }
 
     /// <summary>
