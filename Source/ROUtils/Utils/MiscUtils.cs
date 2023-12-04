@@ -19,6 +19,20 @@ namespace ROUtils
             return val;
         }
 
+        public static void Swap<T>(ref T a, ref T b)
+        {
+            T c = a;
+            a = b;
+            b = c;
+        }
+
+        public static void FastRemoveAt<T>(this List<T> list, int i)
+        {
+            int c = list.Count - 1;
+            list[i] = list[c];
+            list.RemoveAt(c);
+        }
+
         public static Texture2D GetReadableCopy(this Texture2D texture)
         {
             Texture2D readable = new Texture2D(texture.width, texture.height);

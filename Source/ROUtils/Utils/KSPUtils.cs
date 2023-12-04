@@ -47,27 +47,34 @@ namespace ROUtils
             return list;
         }
 
-        public static double PrincipiaCorrectInclination(Orbit o)
+        public static List<T> FixedFindModulesImplementing<T>(this Part part) where T : class
         {
-            if (ModUtils.IsPrincipiaInstalled && o.referenceBody != (FlightGlobals.currentMainBody ?? Planetarium.fetch.Home))
-            {
-                Vector3d polarAxis = o.referenceBody.BodyFrame.Z;
+            var listPM = FixedFindModulesImplementingConst<T>(part);
+            int c = listPM.Count;
+            var newList = new List<T>(c);
+            for (int i = 0; i < c; ++i)
+                newList.Add(listPM[i] as T);
 
-                double hSqrMag = o.h.sqrMagnitude;
-                if (hSqrMag == 0d)
-                {
-                    return Math.Acos(Vector3d.Dot(polarAxis, o.pos) / o.pos.magnitude) * (180.0 / Math.PI);
-                }
-                else
-                {
-                    Vector3d orbitZ = o.h / Math.Sqrt(hSqrMag);
-                    return Math.Atan2((orbitZ - polarAxis).magnitude, (orbitZ + polarAxis).magnitude) * (2d * (180.0 / Math.PI));
-                }
-            }
-            else
+            return newList;
+        }
+
+        public static List<PartModule> FixedFindModulesImplementingConst<T>(this Part part) where T : class
+        {
+            Type typeFromHandle = typeof(T);
+            if (part.cachedModuleLists.TryGetValue(typeFromHandle, out var list))
+                return list;
+
+            list = new List<PartModule>();
+            for (int i = 0, ic = part.modules.Count; i < ic; ++i)
             {
-                return o.inclination;
+                PartModule partModule = part.modules[i];
+                if (partModule is T)
+                {
+                    list.Add(partModule);
+                }
             }
+            part.cachedModuleLists[typeFromHandle] = list;
+            return list;
         }
 
         /// <summary>
