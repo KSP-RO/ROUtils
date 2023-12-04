@@ -124,6 +124,7 @@
     <Compile Include="DataTypes\PersistentSortedList.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ResourceUnitInfo.cs" />
+    <Compile Include="CachedObject.cs" />
     <Compile Include="SingletonHost.cs" />
     <Compile Include="Utils\ContinuousLogger.cs" />
     <Compile Include="Utils\DTUtils.cs" />
