@@ -23,6 +23,7 @@ namespace ROUtils
 
         public virtual void Start() { }
 
+        [Obsolete("Will never actually get destroyed. Remove at a later date.")]
         public virtual void OnDestroy() { }
     }
 
@@ -75,23 +76,6 @@ namespace ROUtils
                     Debug.LogError($"Exception starting {s.GetType()}: {e}");
                 }
             }
-        }
-
-        public void OnDestroy()
-        {
-            for (int i = _singletons.Count; i-- > 0;)
-            {
-                try
-                {
-                    _singletons[i].OnDestroy();
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError($"Exception destroying {(_singletons[i]).GetType()}: {e}");
-                }
-                _singletons[i] = null;
-            }
-            _singletons.Clear();
         }
     }
 }
