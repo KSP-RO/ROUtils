@@ -24,7 +24,19 @@ namespace ROUtils
             }
         }
 
-                
+        private static bool? _isFARInstalled;
+        public static bool IsFARInstalled
+        {
+            get
+            {
+                if (!_isFARInstalled.HasValue)
+                {
+                    _isFARInstalled = AssemblyLoader.loadedAssemblies.Any(a => a.assembly.GetName().Name == "FerramAerospaceResearch");
+                }
+                return _isFARInstalled.Value;
+            }
+        }
+
         private static bool? _isTestFlightInstalled = null;
         private static bool? _isTestLiteInstalled = null;
 
