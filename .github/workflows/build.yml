@@ -74,7 +74,7 @@ jobs:
           cp -v -R "${GITHUB_WORKSPACE}/README.md" "${RELEASE_DIR}/GameData/ROUtils/README.md"
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: ROUtils
           path: ${{ steps.assemble-release.outputs.release-dir }}
