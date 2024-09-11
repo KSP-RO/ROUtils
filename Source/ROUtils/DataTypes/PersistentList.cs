@@ -8,7 +8,7 @@ namespace ROUtils.DataTypes
     {
         protected CollectionPersistence<T> _persister;
 
-        public void Load(ConfigNode node)
+        public virtual void Load(ConfigNode node)
         {
             _persister.Load(node);
         }
@@ -192,7 +192,7 @@ namespace ROUtils.DataTypes
             }
         }
 
-        public new void Load(ConfigNode node)
+        public override void Load(ConfigNode node)
         {
             base.Load(node);
             for (int i = 0; i < Count; ++i)
