@@ -123,6 +123,7 @@
     <Compile Include="DataTypes\PersistentList.cs" />
     <Compile Include="DataTypes\PersistentSortedList.cs" />
     <Compile Include="ProceduralTools\DragCubeToolEvents.cs" />
+    <Compile Include="FastFloatCurve.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ResourceUnitInfo.cs" />
     <Compile Include="CachedObject.cs" />

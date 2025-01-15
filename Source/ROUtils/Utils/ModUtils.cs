@@ -8,7 +8,7 @@ namespace ROUtils
     public static class ModUtils
     {
         private static bool _RP1Installed = false;
-        private static bool _NeedFindRP1 = false;
+        private static bool _NeedFindRP1 = true;
 
         public static bool IsRP1Installed
         {
