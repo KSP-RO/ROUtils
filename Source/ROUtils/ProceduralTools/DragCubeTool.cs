@@ -389,16 +389,18 @@ namespace ROUtils
 
         private static DragCube CloneCube(DragCube dragCube)
         {
-            return new DragCube
+            var c = new DragCube
             {
-                area = dragCube.area,
-                drag = dragCube.drag,
-                depth = dragCube.depth,
-                dragModifiers = dragCube.dragModifiers,
                 center = dragCube.center,
                 size = dragCube.size,
                 name = dragCube.name
             };
+            DragCubeList.SetCubeArray(c.area, dragCube.area);
+            DragCubeList.SetCubeArray(c.drag, dragCube.drag);
+            DragCubeList.SetCubeArray(c.depth, dragCube.depth);
+            DragCubeList.SetCubeArray(c.dragModifiers, dragCube.dragModifiers);
+
+            return c;
         }
 
         private static void RunCubeValidation(Part p, DragCube cacheCube, string shapeKey)
