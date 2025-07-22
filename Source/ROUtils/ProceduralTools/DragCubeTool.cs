@@ -39,6 +39,11 @@ namespace ROUtils
         public Part Part { get; private set; }
 
         /// <summary>
+        /// Invoked once all drag cubes have been generated and assigned to the part.
+        /// </summary>
+        public event EventHandler AllCubesAssigned;
+
+        /// <summary>
         /// Creates and assigns a drag cube for the given procedural part.
         /// This process can have one to many frames of delay.
         /// During part compilation this can happen immediately but may not be possible if part needs multiple cubes.
@@ -119,6 +124,7 @@ namespace ROUtils
             else
             {
                 UpdateCubes(Part, _shapeKey, _updateSymCounterparts);
+                AllCubesAssigned?.Invoke(this, EventArgs.Empty);
                 Destroy(this);
             }
         }
@@ -171,6 +177,7 @@ namespace ROUtils
 
                 NotifyFARIfNeeded(Part);
                 EnsureStatsRoutineStarted(Part);
+                AllCubesAssigned?.Invoke(this, EventArgs.Empty);
 
                 Destroy(this);
             }
@@ -261,6 +268,7 @@ namespace ROUtils
 
             NotifyFARIfNeeded(Part);
             EnsureStatsRoutineStarted(Part);
+            AllCubesAssigned?.Invoke(this, EventArgs.Empty);
 
             Destroy(this);
         }
