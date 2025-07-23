@@ -123,11 +123,13 @@
     <Compile Include="DataTypes\PersistentList.cs" />
     <Compile Include="DataTypes\PersistentSortedList.cs" />
     <Compile Include="HermiteCurve.cs" />
+    <Compile Include="ProceduralTools\DragCubeToolEvents.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ResourceUnitInfo.cs" />
     <Compile Include="CachedObject.cs" />
     <Compile Include="SingletonHost.cs" />
     <Compile Include="Utils\ContinuousLogger.cs" />
+    <Compile Include="ProceduralTools\DragCubeTool.cs" />
     <Compile Include="Utils\DTUtils.cs" />
     <Compile Include="Utils\HyperEdit_Utilities.cs" />
     <Compile Include="Utils\KSPUtils.cs" />
