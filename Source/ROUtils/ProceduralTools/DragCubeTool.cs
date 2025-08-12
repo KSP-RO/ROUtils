@@ -351,6 +351,8 @@ namespace ROUtils
 
         private static void AssignNonMultiCube(Part p, DragCube dragCube, bool clone)
         {
+            int oldCubeCount = p.DragCubes.Cubes.Count;
+
             if (clone)
                 dragCube = CloneCube(dragCube);
 
@@ -359,6 +361,11 @@ namespace ROUtils
             p.DragCubes.ResetCubeWeights();
             p.DragCubes.ForceUpdate(true, true, false);
             p.DragCubes.SetDragWeights();
+
+            if (oldCubeCount != 1)
+            {
+                ClobberPAWAeroControl(p);
+            }
         }
 
         private static void AssignMultiCubes(Part p, List<DragCube> cubes, bool clone)
@@ -371,7 +378,8 @@ namespace ROUtils
                 }
             }
 
-            if (p.DragCubes.Cubes.Count == cubes.Count)
+            int oldCubeCount = p.DragCubes.Cubes.Count;
+            if (oldCubeCount == cubes.Count)
             {
                 // Copy over weights from part cubes. Most likely these were already updated to reflect animation state.
                 foreach (DragCube c in cubes)
@@ -386,6 +394,21 @@ namespace ROUtils
             p.DragCubes.Cubes.AddRange(cubes);
             p.DragCubes.ForceUpdate(true, true, false);
             p.DragCubes.SetDragWeights();
+
+            if (oldCubeCount != cubes.Count)
+            {
+                ClobberPAWAeroControl(p);
+            }
+        }
+
+        private static void ClobberPAWAeroControl(Part p)
+        {
+            // Need to update UIPartActionAeroDisplay or it will start throwing if drag cube count no longer matches
+            if (p.PartActionWindow != null && p.PartActionWindow.CanActivateAeroDisplay(p))
+            {
+                UIPartActionAeroDisplay c = p.PartActionWindow.TrySetAeroControl(p);
+                c?.Setup(p.PartActionWindow, p, HighLogic.LoadedSceneIsFlight ? UI_Scene.Flight : UI_Scene.Editor);
+            }
         }
 
         private static bool PartNeedsMultipleCubes(Part p)
