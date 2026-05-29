@@ -16,5 +16,7 @@ resources:
 depends:
   - name: KSPCommunityFixes
     suppress_recommendations: true
+  - name: SerializationFix
+    suppress_recommendations: true
   - name: KerbalChangelog
     suppress_recommendations: true

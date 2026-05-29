@@ -38,8 +38,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyFileVersion("@MAJOR@.@MINOR@.@PATCH@.@BUILD@")]
 [assembly: KSPAssembly("ROUtils", @MAJOR@, @MINOR@, @PATCH@)]
 #else
-[assembly: AssemblyFileVersion("1.1.0.0")]
-[assembly: KSPAssembly("ROUtils", 1, 1, 0)]
+[assembly: AssemblyFileVersion("1.2.0.0")]
+[assembly: KSPAssembly("ROUtils", 1, 2, 0)]
 #endif
 
 [assembly: KSPAssemblyDependency("KSPCommunityFixes", 1, 22, 1)]
+[assembly: KSPAssemblyDependency("SerializationFix", 1, 0, 0)]

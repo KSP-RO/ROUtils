@@ -13,6 +13,7 @@ namespace ROUtils
     /// It also provide a bunch of utility methods for analyzing and constructing the curve from code, including various ways to
     /// auto-compute the keys tangents.
     /// </summary>
+    [Serializable]
     public class HermiteCurve : IEnumerable<HermiteCurve.Key>, IConfigNode
     {
         /// <summary>
