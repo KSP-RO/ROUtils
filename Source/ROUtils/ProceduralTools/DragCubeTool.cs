@@ -22,6 +22,7 @@ namespace ROUtils
         private string _shapeKey;
         private bool _updateSymCounterparts;
         private Coroutine _multiCubeRoutine;
+        private bool _ownsGameObject;   // Only used during part compilation on multi-cube parts
 
         /// <summary>
         /// Globally enable of disable drag cube caching.
@@ -46,23 +47,25 @@ namespace ROUtils
         /// <summary>
         /// Creates and assigns a drag cube for the given procedural part.
         /// This process can have one to many frames of delay.
-        /// During part compilation this can happen immediately but may not be possible if part needs multiple cubes.
+        /// During part compilation a single cube is assigned immediately; a part needing multiple cubes is
+        /// rendered on a throwaway GameObject instead, since the part prefab itself is inactive at that point.
+        /// I.e the standard FixedUpdate path won't get called at all.
         /// </summary>
         /// <param name="p">Part to create drag cube for</param>
         /// <param name="shapeKey">Key that uniquely identifies the geometry of the part.Used in caching logic. Use null if no caching is desired.</param>
-        /// <param name="updateSymCounterparts">If true then will also apply the same drag cube to all other parts that are in symmetry</param>
+        /// <param name="updateSymCounterparts">If true then will also apply the same drag cube to all other parts that are in symmetry. Ignored during part compilation.</param>
         /// <returns>DragCubeTool instance if the updating cannot be done immediately; otherwise null</returns>
         public static DragCubeTool UpdateDragCubes(Part p, string shapeKey = null, bool updateSymCounterparts = false)
         { 
-            if (!PartLoader.Instance.IsReady() && TryUpdateDragCubesForPartCompilation(p, shapeKey))
-                return null;
+            if (!PartLoader.Instance.IsReady())
+                return UpdateDragCubesForPartCompilation(p, shapeKey);
 
             var tool = p.GetComponent<DragCubeTool>();
             if (tool == null)
             {
                 tool = p.gameObject.AddComponent<DragCubeTool>();
-                tool.Part = p;
             }
+            tool.Part = p;
             tool._shapeKey = shapeKey;
             tool._updateSymCounterparts = updateSymCounterparts;
             return tool;
@@ -82,7 +85,7 @@ namespace ROUtils
             if (Part == null)
             {
                 // Somehow part can become null when doing cloning in symmetry
-                Destroy(this);
+                Cleanup();
                 return;
             }
 
@@ -101,13 +104,32 @@ namespace ROUtils
             return true;
         }
 
-        private static bool TryUpdateDragCubesForPartCompilation(Part p, string shapeKey)
+        /// <summary>
+        /// PartLoader deactivates a part's GameObject before the prefab is handed out, so a DragCubeTool
+        /// attached to the part during compilation would never receive a FixedUpdate. It would sit on the
+        /// prefab forever and get cloned onto every part instantiated from it, where it would swallow all
+        /// later update requests (the cloned tool has no Part and destroys itself on its first FixedUpdate).
+        /// So never touch the prefab's component list while parts are being compiled.
+        /// </summary>
+        private static DragCubeTool UpdateDragCubesForPartCompilation(Part p, string shapeKey)
         {
-            if (PartNeedsMultipleCubes(p))
-                return false;
-
+            if (!PartNeedsMultipleCubes(p))
+            {
             UpdateCubes(p, shapeKey, updateSymCounterparts: false);
-            return true;
+                return null;
+        }
+
+            // Rendering multiple cubes spans several frames and thus needs an active GameObject to run the
+            // coroutine on. The tool destroys this host along with itself once all cubes have been assigned.
+            var host = new GameObject($"DragCubeTool {p.name}");
+            var tool = host.AddComponent<DragCubeTool>();
+            tool.Part = p;
+            tool._shapeKey = shapeKey;
+            tool._ownsGameObject = true;
+            // Drive it directly instead of waiting for FixedUpdate: the loading scene can be torn down
+            // before the next physics step and there is nothing to wait for during compilation anyway.
+            tool.UpdateCubes();
+            return tool;
         }
 
         private void UpdateCubes()
@@ -125,8 +147,19 @@ namespace ROUtils
             {
                 UpdateCubes(Part, _shapeKey, _updateSymCounterparts);
                 AllCubesAssigned?.Invoke(this, EventArgs.Empty);
-                Destroy(this);
+                Cleanup();
             }
+        }
+
+        /// <summary>
+        /// Tears down the tool, including the throwaway GameObject it runs on when it is not hosted by a part.
+        /// </summary>
+        private void Cleanup()
+        {
+            if (_ownsGameObject)
+                Destroy(gameObject);
+            else
+                Destroy(this);
         }
 
         /// <summary>
@@ -179,7 +212,7 @@ namespace ROUtils
                 EnsureStatsRoutineStarted(Part);
                 AllCubesAssigned?.Invoke(this, EventArgs.Empty);
 
-                Destroy(this);
+                Cleanup();
             }
 
             return true;
@@ -270,7 +303,8 @@ namespace ROUtils
             EnsureStatsRoutineStarted(Part);
             AllCubesAssigned?.Invoke(this, EventArgs.Empty);
 
-            Destroy(this);
+            if (!isValidation)
+                Cleanup();
         }
 
         private static void UpdateCubes(Part p, string shapeKey, bool updateSymCounterparts)
@@ -442,8 +476,12 @@ namespace ROUtils
 
         private IEnumerator MultiCubeValidationRoutine(List<DragCube> cacheCubeList)
         {
+            // UpdateMultiCubesRoutine leaves the teardown to us, otherwise destroying the tool would also
+            // kill this coroutine before any of the cubes got compared.
             yield return UpdateMultiCubesRoutine(isValidation: true);
 
+            try
+            {
             IMultipleDragCube multiCube = Part.FindModuleImplementing<IMultipleDragCube>();
             string[] names = multiCube.GetDragCubeNames();
             if (names.Length != cacheCubeList.Count)
@@ -464,6 +502,11 @@ namespace ROUtils
                 }
 
                 RunCubeValidation(cacheCubeList[i], dragCube, Part, shapeKey);
+            }
+        }
+            finally
+            {
+                Cleanup();
             }
         }
 
