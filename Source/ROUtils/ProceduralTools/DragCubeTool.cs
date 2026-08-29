@@ -56,7 +56,7 @@ namespace ROUtils
         /// <param name="updateSymCounterparts">If true then will also apply the same drag cube to all other parts that are in symmetry. Ignored during part compilation.</param>
         /// <returns>DragCubeTool instance if the updating cannot be done immediately; otherwise null</returns>
         public static DragCubeTool UpdateDragCubes(Part p, string shapeKey = null, bool updateSymCounterparts = false)
-        { 
+        {
             if (!PartLoader.Instance.IsReady())
                 return UpdateDragCubesForPartCompilation(p, shapeKey);
 
@@ -115,9 +115,9 @@ namespace ROUtils
         {
             if (!PartNeedsMultipleCubes(p))
             {
-            UpdateCubes(p, shapeKey, updateSymCounterparts: false);
+                UpdateCubes(p, shapeKey, updateSymCounterparts: false);
                 return null;
-        }
+            }
 
             // Rendering multiple cubes spans several frames and thus needs an active GameObject to run the
             // coroutine on. The tool destroys this host along with itself once all cubes have been assigned.
@@ -234,7 +234,11 @@ namespace ROUtils
             foreach (string cName in multiCube.GetDragCubeNames())
             {
                 string shapeKey = _shapeKey == null ? null : $"{_shapeKey}${cName}";
-                bool alreadyInProgress = !_inProgressMultiCubeRenderings.Add(shapeKey);
+                // Waiting for another render only works if that render writes its result to the cache.
+                // AddCubeToCache skips the write when caching is off or parts are still being compiled.
+                // In those cases render our own copy instead of waiting forever.
+                bool canShareViaCache = UseCache && shapeKey != null && PartLoader.Instance.IsReady();
+                bool alreadyInProgress = canShareViaCache && !_inProgressMultiCubeRenderings.Add(shapeKey);
                 if (!alreadyInProgress || isValidation)
                 {
                     try
@@ -258,7 +262,8 @@ namespace ROUtils
                     }
                     finally
                     {
-                        _inProgressMultiCubeRenderings.Remove(shapeKey);
+                        if (canShareViaCache)
+                            _inProgressMultiCubeRenderings.Remove(shapeKey);
                     }
                 }
                 else
@@ -482,28 +487,28 @@ namespace ROUtils
 
             try
             {
-            IMultipleDragCube multiCube = Part.FindModuleImplementing<IMultipleDragCube>();
-            string[] names = multiCube.GetDragCubeNames();
-            if (names.Length != cacheCubeList.Count)
-            {
-                Debug.LogError($"[DragCubeTool] Cube count mismatch in MultiCubeValidationRoutine");
-                yield break;
-            }
-
-            for (int i = 0; i < names.Length; i++)
-            {
-                string cName = names[i];
-                string shapeKey = $"{_shapeKey}${cName}";
-                if (!_cacheDict.TryGetValue(shapeKey, out DragCube dragCube))
+                IMultipleDragCube multiCube = Part.FindModuleImplementing<IMultipleDragCube>();
+                string[] names = multiCube.GetDragCubeNames();
+                if (names.Length != cacheCubeList.Count)
                 {
-                    // cache got cleared?
-                    Debug.LogWarning($"[DragCubeTool] Failed to fetch {shapeKey} from cache in MultiCubeValidationRoutine");
+                    Debug.LogError($"[DragCubeTool] Cube count mismatch in MultiCubeValidationRoutine");
                     yield break;
                 }
 
-                RunCubeValidation(cacheCubeList[i], dragCube, Part, shapeKey);
+                for (int i = 0; i < names.Length; i++)
+                {
+                    string cName = names[i];
+                    string shapeKey = $"{_shapeKey}${cName}";
+                    if (!_cacheDict.TryGetValue(shapeKey, out DragCube dragCube))
+                    {
+                        // cache got cleared?
+                        Debug.LogWarning($"[DragCubeTool] Failed to fetch {shapeKey} from cache in MultiCubeValidationRoutine");
+                        yield break;
+                    }
+
+                    RunCubeValidation(cacheCubeList[i], dragCube, Part, shapeKey);
+                }
             }
-        }
             finally
             {
                 Cleanup();
